@@ -40,7 +40,11 @@ def generate_trace(
 
 
 if __name__ == "__main__":
+    
+    output_dir = Path("./../Traces/")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     generate_trace(
-        output_dir="/data/heterods-trace/",
-        filename="insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bi",
+        output_dir="./../Traces/",
+        filename="insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin",
     )

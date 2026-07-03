@@ -42,9 +42,13 @@ def generate_monotonic_keys(
 
 
 if __name__ == "__main__":
+    
+    output_dir = Path("./../Traces/")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     generate_monotonic_keys(
         max_value=400_000_0000,
-        output_dir="/data/heterods-trace/",
+        output_dir="./../Traces/",
         filename="insert_trace-400e7-100-add-no-dup-MONOTONIC_INCREASE.bin",
         chunk_size=10_000_000,
     )

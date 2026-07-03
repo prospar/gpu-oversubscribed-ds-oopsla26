@@ -26,7 +26,11 @@ def generate_random_permutation(
 
 
 if __name__ == "__main__":
+    
+    output_dir = Path("./../Traces/")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     generate_random_permutation(
-        output_dir="/data/heterods-trace/",
+        output_dir="./../Traces/",
         filename="insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin",
     )

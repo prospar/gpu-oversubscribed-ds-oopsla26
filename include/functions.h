@@ -43,7 +43,9 @@ using std::filesystem::path;
 
 /** Helper for CUDA errors */
 #define cudaCheckErrorMacro(ans, msg)                                          \
-  { gpuAssert((ans), msg, __FILE__, __LINE__); }
+  {                                                                            \
+    gpuAssert((ans), msg, __FILE__, __LINE__);                                 \
+  }
 inline void gpuAssert(cudaError_t code, string msg, const char *file, int line,
                       bool abort = true) {
   if (code != cudaSuccess) {
@@ -210,12 +212,11 @@ private:
     return static_cast<uint32_t>(x);
   }
 };
-
 //Comparator functor for thrust in case of delete and search
-struct CompareKeysByRangeShift {
+struct CompareByRangeShiftDS {
   int shift;
 
-  __host__ __device__ CompareKeysByRangeShift(int power_of_two)
+  __host__ __device__ CompareByRangeShiftDS(int power_of_two)
       : shift(power_of_two) {}
 
   __host__ __device__ bool operator()(const unsigned int &a,
@@ -300,53 +301,6 @@ template <typename T> struct simple_cached_allocator {
   ~simple_cached_allocator() { reset(); }
 };
 
-class CachingAllocator {
-public:
-  using value_type = char;
-
-  char *allocate(std::ptrdiff_t size) {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    auto it = cache.find(size);
-    if (it != cache.end() && !it->second.empty()) {
-      char *ptr = it->second.back();
-      it->second.pop_back();
-      return ptr;
-    }
-
-    char *ptr = nullptr;
-    cudaMalloc((void **)&ptr, size);
-    return ptr;
-  }
-
-  void deallocate(char *ptr, std::ptrdiff_t size) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cache[size].push_back(ptr);
-  }
-
-  ~CachingAllocator() {
-    for (auto &pair : cache) {
-      for (char *ptr : pair.second) {
-        cudaFree(ptr);
-      }
-    }
-  }
-
-  void reset() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    for (auto &pair : cache) {
-      for (char *ptr : pair.second) {
-        cudaFree(ptr);
-      }
-    }
-    cache.clear();
-  }
-
-private:
-  std::mutex mutex_;
-  std::map<std::ptrdiff_t, std::vector<char *>> cache;
-};
-
 /** Describe flags */
 void validFlagsDescription() {
   cout << "ops: total number of operations\n"
@@ -362,12 +316,12 @@ void validFlagsDescription() {
        << "mod: select the mode of offload to CPU\n"
        << "rng: specify the size of the coarse-grained range\n"
        << "gbs: specify the GPU batch size for processing\n"
+       << "blk: number of thread blocks for skiplist\n"
+       << "siz: number of threads per block for skiplist\n"
+       << "ovr: oversubscription ratio for skiplist\n"
        << "tra: insertion trace file name\n"
        << "trr: deletion trace file name\n"
-       << "trf: search trace file name\n"
-       << "kpw: Keys per warp for skiplist\n"
-       << "wtw: number of warps participate in waiting\n"
-       << "pss: enable predecessor search in skiplist\n";
+       << "trf: search trace file name\n";
 }
 
 /** Parse command line flags and initialize the variables */
@@ -392,8 +346,6 @@ int parse_args(char *arg) {
 
   if (s1 == "-ops") {
     NUM_OPS = val;
-  } else if (s1 == "-off") {
-    PERCENT_OFFLOAD = val;
   } else if (s1 == "-rns") {
     runs = val;
   } else if (s1 == "-add") {
@@ -428,13 +380,6 @@ int parse_args(char *arg) {
     BLOCK_SIZE = val;
   } else if (s1 == "-ovr") { // oversubscription ratio
     OVERSUB_RATIO = (float)val;
-  } else if (s1 == "-kpw") { // keys per warp
-    KEYS_PER_WARP = val;
-  } else if (s1 == "-wtw") { // number of warp participate in waiting
-    WAITING_WARPS = val;
-  } else if (s1 == "-pss") { // enable predecessor search
-    PREDECESSOR_SEARCH = (bool)val;
-    cout << "Predecessor search set to " << PREDECESSOR_SEARCH << "\n";
   } else {
     cout << "Unsupported flag:" << s1 << "\n";
     cout << "Use the below list flags:\n";
@@ -459,11 +404,6 @@ inline void unpackKeyValue(uint64_t value, uint32_t &key, uint32_t &val) {
 /** Extract the key from KVPair */
 inline uint32_t extractKey(uint64_t KVPair) {
   return static_cast<uint32_t>(KVPair >> 32);
-}
-
-inline int fnv_hash(int key) {
-  bool prob = (key % 100) > PERCENT_OFFLOAD;
-  return prob;
 }
 
 __device__ bool lookupduplimpl(uint32_t *searchArr, uint32_t key, size_t tid,

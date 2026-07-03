@@ -8,12 +8,9 @@
 #include <cstdint>
 #include <cstring>
 
-uint64_t NUM_OPS = 1e8;         // Total operations
-uint64_t NUM_ADD_OPS = 100;     // Number of insert operations
-uint64_t NUM_REM_OPS = 0;       // Number of delete operations
-uint64_t PERCENT_INSERT = 100;  // Percentage of insert
-uint64_t PERCENT_DELETE = 0;    // Percentage of delete
-uint32_t PERCENT_OFFLOAD = 100; // Percentage of operations executed by the GPU
+uint64_t NUM_OPS = 1e8;     // Total operations
+uint64_t NUM_ADD_OPS = 100; // Number of insert operations
+uint64_t NUM_REM_OPS = 0;   // Number of delete operations
 
 uint32_t USE_TRACE_FILE = 1; // Read the trace file for operation list
 // Should we prepopulate a portion (in percentage) of the  hash table?
@@ -62,9 +59,6 @@ uint32_t NUM_BLOCKS = 512;  // Number of Blocks
 uint32_t BLOCK_SIZE = 512;  // Number of theads per block
 uint32_t OVERSUB_RATIO = 0; // Oversubscription ratio
 uint32_t NUM_CHUNKS = 1024;
-uint32_t KEYS_PER_WARP = 1;      // keys per warp min:1(gfsl baseline) max:30
-uint32_t WAITING_WARPS = 512;    // control the warp that proceed sequentially
-bool PREDECESSOR_SEARCH = false; // Enable predecessor search
 
 struct iterationTime {
   uint32_t iteration;
@@ -72,7 +66,6 @@ struct iterationTime {
   float total_insert_time;
   float total_delete_time;
   float total_search_time;
-  float total_predecessor_time;
   float total_batch_time;
   float total_sort_time;
 };

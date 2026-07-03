@@ -159,20 +159,6 @@ int main(int argc, char *argv[]) {
   auto capacity = getCapacity(desiredGPUHTSize);
   cout << "GPU hash table capacity: " << capacity << "\n";
 
-  // uint64_t *dummy_array = nullptr;
-
-  // size_t num_elements = (size_t)(1) << 32;
-
-  // cudaError_t err =
-  //     cudaMalloc((&dummy_array), sizeof(uint64_t) * (size_t)num_elements);
-
-  // if (err != cudaSuccess) {
-  //   std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl;
-  //   return 1;
-  // } else {
-  //   std::cout << "Successfully allocated 32 GB of GPU memory." << std::endl;
-  // }
-
   // Create hash table.This should not be timed to measure kernel throughput.
   KeyValue *gt = creategpuHash_UVM(capacity);
 
