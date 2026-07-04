@@ -55,6 +55,8 @@ do
         mkdir -p "$outdir"
         total_ops=$((2 * ops))
         rem_ops=$((total_ops - ops))
-        ./htovs-opt.out -ops="$total_ops" -add="$ops" -rem="$rem_ops" -fil=1 -rns=1 -tra="$file" -trr="$file" -gbs=1000000000 -rng=1048576 > "${outdir}/${ops}.log"
+        base=2000000000
+        oversub=$(( (ops - base) * 100 / base ))
+        ./htovs-opt.out -ops="$total_ops" -add="$ops" -rem="$rem_ops" -fil=1 -rns=1 -tra="$file" -trr="$file" -gbs=1000000000 -rng=1048576 > "${outdir}/${oversub}.log"
     done
 done

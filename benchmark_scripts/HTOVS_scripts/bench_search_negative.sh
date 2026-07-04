@@ -56,6 +56,21 @@ do
         else
             add_ops=2500000000
         fi
-        ./htovs-opt.out -ops="$ops" -add="$add_ops" -rem=0 -fil=1 -rns=1 -tra="$file" -trf="$file" -gbs=1000000000 -rng=1048576 > "${outdir}/${ops}.log"
+        base_ops=$((ops - add_ops))
+        num=$((base_ops - add_ops))
+        den=$base_ops
+
+        a=$num
+        b=$den
+        while [ $b -ne 0 ]; do
+            t=$b
+            b=$((a % b))
+            a=$t
+        done
+        gcd=$a
+
+        num=$((num / gcd))
+        den=$((den / gcd))
+        ./htovs-opt.out -ops="$ops" -add="$add_ops" -rem=0 -fil=1 -rns=1 -tra="$file" -trf="$file" -gbs=1000000000 -rng=1048576 > "${outdir}/${num}_${den}.log"
     done
 done

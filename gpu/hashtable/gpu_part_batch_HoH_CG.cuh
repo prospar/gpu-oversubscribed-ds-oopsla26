@@ -13,12 +13,6 @@
 #include "functions.h"
 #include "global-vars.h"
 
-#if defined(ATOMIC_WRAPPER)
-#include "cpu_hoh_atomic_wrapper.h"
-#else
-#include "cpu_part_batch_HoH.h"
-#endif
-
 namespace cg = cooperative_groups;
 
 using std::cout;
@@ -88,9 +82,8 @@ HoHGpu *createGPUHash_UVM_CG(uint64_t outer_slots_size,
 
 __device__ uint32_t *insertgpu_inner_hashtable_CG(
     uint32_t key, KeyValue *hashtable, uint64_t inner_table_capacity,
-    uint64_t maxCollisions, uint32_t rand_int, uint32_t *unique_count,
-    uint32_t range_size, uint32_t *unique_key_slot_of_outer_HT,
-    uint64_t primeDHinner, uint32_t *collision_list_outer,
+    uint32_t rand_int, uint32_t range_size,
+    uint32_t *unique_key_slot_of_outer_HT, uint64_t primeDHinner,
     const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
   uint64_t pos = 0;
 #if defined(LINEAR_PROBING) || defined(QUADRATIC_PROBING)
@@ -106,7 +99,7 @@ __device__ uint32_t *insertgpu_inner_hashtable_CG(
 #elif defined(SH)
   i = (hashFuncSH(key, rand_int) + group.thread_rank()) % inner_table_capacity;
 #elif defined(MM)
-  i = (hashFuncWC(key) + group.thread_rank()) % inner_table_capacity;
+  i = (hashFuncMurmur(key) + group.thread_rank()) % inner_table_capacity;
 #else
   i = (((uint64_t)key * 11400714819323198485) + group.thread_rank()) %
       inner_table_capacity;
@@ -125,10 +118,6 @@ __device__ uint32_t *insertgpu_inner_hashtable_CG(
       const auto leader = __ffs(hitmask) - 1;
       const auto leader_index = group.shfl(i, leader);
       // printf("The leader index in hitmask %d\n", leader_index);
-#ifdef STATS
-      if (group.thread_rank() == leader)
-        printf("The collision count(from hit) is %d\n", c);
-#endif
       return (&hashtable[leader_index].value);
     }
 
@@ -154,10 +143,6 @@ __device__ uint32_t *insertgpu_inner_hashtable_CG(
         const auto leader_index = group.shfl(i, leader);
         // printf("In any sync: the leader index is: %d and key is: %d\n",
         //        leader_index, hashtable[leader_index].key);
-#ifdef STATS
-        if (group.thread_rank() == leader)
-          printf("The collision count(from duplicate) is %d\n", c);
-#endif
         return (&hashtable[leader_index].value);
       }
 
@@ -166,10 +151,6 @@ __device__ uint32_t *insertgpu_inner_hashtable_CG(
         // if (hashtable[leader_index].key == 134217729)
         //   printf("The leader index in success %d and key is: %d\n",
         //          leader_index, hashtable[leader_index].key);
-#ifdef STATS
-        if (group.thread_rank() == leader)
-          printf("The collision count(from success) is %d\n", c);
-#endif
 
         // FIXME: SB: Let us estimate the overhead of these atomics by disabling
         // them in a few runs.
@@ -178,11 +159,6 @@ __device__ uint32_t *insertgpu_inner_hashtable_CG(
         }
         return (&hashtable[leader_index].value);
       }
-
-#ifdef STATS
-      if (group.thread_rank() == leader)
-        atomicInc(&c, maxCollisions);
-#endif
 
       // if (group.thread_rank() == leader)
       //   atomicAdd(&collision_list_outer[key / range_size], 1);
@@ -223,9 +199,8 @@ __device__ uint32_t *insertgpu_inner_hashtable_CG(
 /** Find desired slot in the outer hash table based on the range. */
 __device__ uint32_t *insertgpu_outer_hashtable_CG(
     uint32_t key, HoHGpu *hashtable, uint64_t inner_table_capacity,
-    uint32_t range_detector_val, uint64_t maxCollisions, uint32_t rand_int,
-    uint32_t *unique_count, uint32_t range_size, uint64_t gpuHTOuterSize,
-    uint64_t primeDH, uint64_t primeDHinner, uint32_t *collision_list_outer,
+    uint32_t range_detector_val, uint32_t rand_int, uint32_t range_size,
+    uint64_t gpuHTOuterSize, uint64_t primeDH, uint64_t primeDHinner,
     const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
   uint64_t pos = group.thread_rank();
   uint64_t outer_slot_index = 0;
@@ -240,9 +215,8 @@ __device__ uint32_t *insertgpu_outer_hashtable_CG(
       const auto leader_index = group.shfl(outer_slot_index, leader);
       uint32_t *value_address = insertgpu_inner_hashtable_CG(
           key, hashtable[leader_index].inner_hashtable, inner_table_capacity,
-          maxCollisions, rand_int, unique_count, range_size,
-          &(hashtable[leader_index].unique_keys), primeDHinner,
-          collision_list_outer, group);
+          rand_int, range_size, &(hashtable[leader_index].unique_keys),
+          primeDHinner, group);
       return value_address;
     }
 
@@ -265,9 +239,8 @@ __device__ uint32_t *insertgpu_outer_hashtable_CG(
 
         uint32_t *value_address = insertgpu_inner_hashtable_CG(
             key, hashtable[leader_index].inner_hashtable, inner_table_capacity,
-            maxCollisions, rand_int, unique_count, range_size,
-            &(hashtable[leader_index].unique_keys), primeDHinner,
-            collision_list_outer, group);
+            rand_int, range_size, &(hashtable[leader_index].unique_keys),
+            primeDHinner, group);
         // if (group.thread_rank() == leader) {
         //   atomicAdd(&collision_list_outer[key / range_size], 1);
         // }
@@ -277,15 +250,10 @@ __device__ uint32_t *insertgpu_outer_hashtable_CG(
         const auto leader_index = group.shfl(outer_slot_index, leader);
         uint32_t *value_address = insertgpu_inner_hashtable_CG(
             key, hashtable[leader_index].inner_hashtable, inner_table_capacity,
-            maxCollisions, rand_int, unique_count, range_size,
-            &(hashtable[leader_index].unique_keys), primeDHinner,
-            collision_list_outer, group);
+            rand_int, range_size, &(hashtable[leader_index].unique_keys),
+            primeDHinner, group);
         return value_address;
       }
-#ifdef STATS
-      if (group.thread_rank() == leader)
-        atomicInc(&c, maxCollisions);
-#endif
       empty_mask ^= 1UL << leader;
     }
     pos += COOP_GROUP_SIZE;
@@ -300,15 +268,13 @@ __device__ uint32_t *insertgpu_outer_hashtable_CG(
 __device__ void
 gpu_insert_key_CG(uint32_t key, uint32_t value, HoHGpu *hashtable,
                   uint64_t inner_table_capacity, uint32_t range_detector_val,
-                  uint64_t maxCollisions, uint32_t rand_int,
-                  uint32_t *unique_count, uint32_t range_size,
+                  uint32_t rand_int, uint32_t range_size,
                   uint64_t outer_table_size, uint64_t primeDH,
-                  uint64_t primeDHinner, uint32_t *collision_list_outer,
+                  uint64_t primeDHinner,
                   const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
   uint32_t *value_addr = insertgpu_outer_hashtable_CG(
-      key, hashtable, inner_table_capacity, range_detector_val, maxCollisions,
-      rand_int, unique_count, range_size, outer_table_size, primeDH,
-      primeDHinner, collision_list_outer, group);
+      key, hashtable, inner_table_capacity, range_detector_val, rand_int,
+      range_size, outer_table_size, primeDH, primeDHinner, group);
   if (group.thread_rank() == 0 && value_addr != NULL) {
     *value_addr = value;
   }
@@ -317,9 +283,8 @@ gpu_insert_key_CG(uint32_t key, uint32_t value, HoHGpu *hashtable,
 /** One thread group will insert one element. */
 __global__ void batch_insert_gpu_kernel_CG(
     HoHGpu *hashtable, KeyValue *kvs_array, uint64_t gpu_ins,
-    uint64_t inner_table_capacity, uint64_t maxCollisions, uint32_t rand_int,
-    uint32_t *unique_count, uint32_t range_size, uint64_t outer_table_size,
-    uint64_t primeDH, uint64_t primeDHinner, uint32_t *collision_list_outer) {
+    uint64_t inner_table_capacity, uint32_t rand_int, uint32_t range_size,
+    uint64_t outer_table_size, uint64_t primeDH, uint64_t primeDHinner) {
   size_t tid = (size_t)blockDim.x * blockIdx.x + threadIdx.x;
   size_t gid = tid / COOP_GROUP_SIZE;
   const auto group =
@@ -329,16 +294,16 @@ __global__ void batch_insert_gpu_kernel_CG(
     gpu_insert_key_CG(
         kvs_array[gid].key, kvs_array[gid].value, hashtable,
         inner_table_capacity, (uint32_t)((kvs_array[gid].key / range_size) + 1),
-        maxCollisions, rand_int, unique_count, range_size, outer_table_size,
-        primeDH, primeDHinner, collision_list_outer, group);
+        rand_int, range_size, outer_table_size, primeDH, primeDHinner, group);
   }
 }
 
 // Called by the driver
-float batch_insert_gpu_unique_count_CG(
-    HoHGpu *hashtable, KeyValue *uvm_kvpairs, uint64_t num_ins,
-    uint64_t outer_table_size, uint64_t inner_table_size, uint32_t range_size,
-    uint32_t *unique_count, uint32_t *collision_list_outer) {
+float batch_insert_gpu_unique_count_CG(HoHGpu *hashtable, KeyValue *uvm_kvpairs,
+                                       uint64_t num_ins,
+                                       uint64_t outer_table_size,
+                                       uint64_t inner_table_size,
+                                       uint32_t range_size) {
   uint64_t num_blocks = SDIV((num_ins * COOP_GROUP_SIZE), BlockSize);
   uint32_t rand_int = 0;
 
@@ -347,17 +312,13 @@ float batch_insert_gpu_unique_count_CG(
   rand_int = rng() % PRIME_DIVISOR;
 #endif
 
-  // Worst case: sum of 0+1+2+...+n-1
-  uint64_t maxCollisions = num_ins * (num_ins - 1) / 2 + 1;
-
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
   cudaEventRecord(start, 0);
   batch_insert_gpu_kernel_CG<<<num_blocks, BlockSize>>>(
-      hashtable, uvm_kvpairs, num_ins, inner_table_size, maxCollisions,
-      rand_int, unique_count, range_size, outer_table_size, smallerPrimeGPU,
-      smallerPrimeInner, collision_list_outer);
+      hashtable, uvm_kvpairs, num_ins, inner_table_size, rand_int, range_size,
+      outer_table_size, smallerPrimeGPU, smallerPrimeInner);
 
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
@@ -372,11 +333,12 @@ float batch_insert_gpu_unique_count_CG(
   return elapsedTime;
 }
 
-__device__ bool deletegpuimpl_key_CG(
-    uint32_t key, KeyValue *innerHashtable, uint64_t inner_table_capacity,
-    uint32_t rand_int, uint32_t *unique_count,
-    uint32_t *unique_key_slot_of_outer_HT, uint64_t primeDHinner,
-    const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
+__device__ bool
+deletegpuimpl_key_CG(uint32_t key, KeyValue *innerHashtable,
+                     uint64_t inner_table_capacity, uint32_t rand_int,
+                     uint32_t *unique_key_slot_of_outer_HT,
+                     uint64_t primeDHinner,
+                     const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
   uint64_t pos = group.thread_rank();
 #if defined(LINEAR_PROBING) || defined(QUADRATIC_PROBING)
   pos = group.thread_rank();
@@ -407,10 +369,6 @@ __device__ bool deletegpuimpl_key_CG(
     if (hitmask) {
       const auto leader = __ffs(hitmask) - 1;
       // const auto leader_index = group.shfl(i, leader);
-#ifdef STATS
-      if (group.thread_rank() == leader)
-        printf("The collision count(from hit) is %d\n", c);
-#endif
       if ((int)group.thread_rank() == leader) {
         innerHashtable[i].key = TOMBSTONE_KEY;
         innerHashtable[i].value = TOMBSTONE_VALUE;
@@ -456,8 +414,7 @@ __device__ bool deletegpuimpl_key_CG(
 __device__ bool
 deletegpuimpl_CG(uint32_t key, HoHGpu *hashtable, uint64_t inner_table_capacity,
                  uint32_t range_detector_val, uint32_t rand_int,
-                 uint32_t *unique_count, uint32_t range_size,
-                 uint64_t gpuHTOuterSize, uint64_t primeDH,
+                 uint32_t range_size, uint64_t gpuHTOuterSize, uint64_t primeDH,
                  uint64_t primeDHinner,
                  const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
   uint64_t pos = group.thread_rank();
@@ -472,8 +429,8 @@ deletegpuimpl_CG(uint32_t key, HoHGpu *hashtable, uint64_t inner_table_capacity,
       const auto leader_index = group.shfl(outer_slot_index, leader);
       bool status = deletegpuimpl_key_CG(
           key, hashtable[leader_index].inner_hashtable, inner_table_capacity,
-          rand_int, unique_count, &(hashtable[leader_index].unique_keys),
-          primeDHinner, group);
+          rand_int, &(hashtable[leader_index].unique_keys), primeDHinner,
+          group);
       if ((int)group.thread_rank() == leader &&
           hashtable[leader_index].unique_keys == 0) {
         hashtable[leader_index].range = 0;
@@ -495,11 +452,12 @@ deletegpuimpl_CG(uint32_t key, HoHGpu *hashtable, uint64_t inner_table_capacity,
   return false;
 }
 
-__global__ void batch_delete_gpu_kernel_CG(
-    HoHGpu *hashtable, uint32_t *del_keys, uint64_t gpu_del,
-    uint64_t inner_table_capacity, uint32_t rand_int, uint32_t *unique_count,
-    uint32_t range_size, uint64_t outer_table_size, uint64_t primeDH,
-    uint64_t primeDHinner, bool *delete_status) {
+__global__ void
+batch_delete_gpu_kernel_CG(HoHGpu *hashtable, uint32_t *del_keys,
+                           uint64_t gpu_del, uint64_t inner_table_capacity,
+                           uint32_t rand_int, uint32_t range_size,
+                           uint64_t outer_table_size, uint64_t primeDH,
+                           uint64_t primeDHinner, bool *delete_status) {
   size_t tid = (size_t)blockDim.x * blockIdx.x + threadIdx.x;
   size_t gid = tid / COOP_GROUP_SIZE;
   const auto group =
@@ -507,8 +465,8 @@ __global__ void batch_delete_gpu_kernel_CG(
   if (gid < gpu_del) {
     bool del = deletegpuimpl_CG(del_keys[gid], hashtable, inner_table_capacity,
                                 (uint32_t)((del_keys[gid] / range_size) + 1),
-                                rand_int, unique_count, range_size,
-                                outer_table_size, primeDH, primeDHinner, group);
+                                rand_int, range_size, outer_table_size, primeDH,
+                                primeDHinner, group);
     if (group.thread_rank() == 0) {
       if (del == true)
         delete_status[gid] = del;
@@ -521,8 +479,8 @@ float batch_delete_gpu_unique_count_CG(HoHGpu *Hashtable,
                                        uint32_t *uvm_del_keys, uint64_t num_del,
                                        uint64_t outer_table_size,
                                        uint64_t inner_table_capacity,
-                                       uint32_t range_size, bool *delete_status,
-                                       uint32_t *unique_count) {
+                                       uint32_t range_size,
+                                       bool *delete_status) {
   uint64_t num_blocks = SDIV((num_del * COOP_GROUP_SIZE), BlockSize);
   uint32_t rand_int = 0;
 
@@ -537,8 +495,8 @@ float batch_delete_gpu_unique_count_CG(HoHGpu *Hashtable,
   cudaEventRecord(start, 0);
   batch_delete_gpu_kernel_CG<<<(uint32_t)num_blocks, BlockSize>>>(
       Hashtable, uvm_del_keys, num_del, inner_table_capacity, rand_int,
-      unique_count, range_size, outer_table_size, smallerPrimeGPU,
-      smallerPrimeInner, delete_status);
+      range_size, outer_table_size, smallerPrimeGPU, smallerPrimeInner,
+      delete_status);
 
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
@@ -555,7 +513,7 @@ float batch_delete_gpu_unique_count_CG(HoHGpu *Hashtable,
 
 __device__ uint32_t searchgpuimpl_key_CG(
     uint32_t key, KeyValue *innerHashtable, uint64_t inner_table_capacity,
-    uint32_t rand_int, uint32_t *unique_count, uint64_t primeDHinner,
+    uint32_t rand_int, uint64_t primeDHinner,
     const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
   uint64_t pos = group.thread_rank();
 #if defined(LINEAR_PROBING) || defined(QUADRATIC_PROBING)
@@ -587,10 +545,6 @@ __device__ uint32_t searchgpuimpl_key_CG(
       const auto leader = __ffs(hitmask) - 1;
       const auto leader_index = group.shfl(i, leader);
       // printf("The leader index in hitmask %d\n", leader_index);
-#ifdef STATS
-      if (group.thread_rank() == leader)
-        printf("The collision count(from hit) is %d\n", c);
-#endif
       return (innerHashtable[leader_index].value);
     }
     if (group.any((key_p == SENTINEL_KEY))) {
@@ -628,9 +582,8 @@ __device__ uint32_t searchgpuimpl_key_CG(
 
 __device__ uint32_t searchgpuimpl_CG(
     uint32_t key, HoHGpu *hashtable, uint64_t inner_table_capacity,
-    uint32_t range_detector_val, uint32_t rand_int, uint32_t *unique_count,
-    uint32_t range_size, uint64_t gpuHTOuterSize, uint64_t primeDH,
-    uint64_t primeDHinner,
+    uint32_t range_detector_val, uint32_t rand_int, uint32_t range_size,
+    uint64_t gpuHTOuterSize, uint64_t primeDH, uint64_t primeDHinner,
     const cg::thread_block_tile<COOP_GROUP_SIZE> &group) {
   uint64_t pos = group.thread_rank();
   uint64_t outer_slot_index = 0;
@@ -645,7 +598,7 @@ __device__ uint32_t searchgpuimpl_CG(
       const auto leader_index = group.shfl(outer_slot_index, leader);
       uint32_t value = searchgpuimpl_key_CG(
           key, hashtable[leader_index].inner_hashtable, inner_table_capacity,
-          rand_int, unique_count, primeDHinner, group);
+          rand_int, primeDHinner, group);
       return value;
     }
     if (hashtable[outer_slot_index].range == 0) {
@@ -663,11 +616,12 @@ __device__ uint32_t searchgpuimpl_CG(
   return 0;
 }
 
-__global__ void batch_search_gpu_kernel_CG(
-    HoHGpu *hashtable, uint32_t *search_keys, uint64_t gpu_search,
-    uint64_t inner_table_capacity, uint32_t rand_int, uint32_t *unique_count,
-    uint32_t range_size, uint64_t outer_table_size, uint64_t primeDH,
-    uint64_t primeDHinner, uint32_t *search_values) {
+__global__ void
+batch_search_gpu_kernel_CG(HoHGpu *hashtable, uint32_t *search_keys,
+                           uint64_t gpu_search, uint64_t inner_table_capacity,
+                           uint32_t rand_int, uint32_t range_size,
+                           uint64_t outer_table_size, uint64_t primeDH,
+                           uint64_t primeDHinner, uint32_t *search_values) {
   size_t tid = (size_t)blockDim.x * blockIdx.x + threadIdx.x;
   size_t gid = tid / COOP_GROUP_SIZE;
   const auto group =
@@ -678,8 +632,8 @@ __global__ void batch_search_gpu_kernel_CG(
     //   printf("Wid are: %d\n", wid);
     uint32_t value = searchgpuimpl_CG(
         search_keys[gid], hashtable, inner_table_capacity,
-        (uint32_t)((search_keys[gid] / range_size) + 1), rand_int, unique_count,
-        range_size, outer_table_size, primeDH, primeDHinner, group);
+        (uint32_t)((search_keys[gid] / range_size) + 1), rand_int, range_size,
+        outer_table_size, primeDH, primeDHinner, group);
     if (group.thread_rank() == 0) {
       if (value != 0)
         search_values[gid] = value;
@@ -688,10 +642,12 @@ __global__ void batch_search_gpu_kernel_CG(
 }
 
 // Called by the driver
-float batch_search_gpu_unique_count_CG(
-    HoHGpu *Hashtable, uint32_t *search_keys, uint64_t num_search,
-    uint64_t outer_table_size, uint64_t inner_table_capacity,
-    uint32_t range_size, uint32_t *search_values, uint32_t *unique_count) {
+float batch_search_gpu_unique_count_CG(HoHGpu *Hashtable, uint32_t *search_keys,
+                                       uint64_t num_search,
+                                       uint64_t outer_table_size,
+                                       uint64_t inner_table_capacity,
+                                       uint32_t range_size,
+                                       uint32_t *search_values) {
   uint64_t num_blocks = SDIV((num_search * COOP_GROUP_SIZE), BlockSize);
   uint32_t rand_int = 0;
 #if defined(SH)
@@ -705,8 +661,8 @@ float batch_search_gpu_unique_count_CG(
   cudaEventRecord(start, 0);
   batch_search_gpu_kernel_CG<<<(uint32_t)num_blocks, BlockSize>>>(
       Hashtable, search_keys, num_search, inner_table_capacity, rand_int,
-      unique_count, range_size, outer_table_size, smallerPrimeGPU,
-      smallerPrimeInner, search_values);
+      range_size, outer_table_size, smallerPrimeGPU, smallerPrimeInner,
+      search_values);
 
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
@@ -725,22 +681,22 @@ float batch_search_gpu_unique_count_CG(
 __global__ void print_kernel_CG(HoHGpu *hashTable, uint64_t outer_table_size,
                                 uint32_t inner_table_capacity) {
   size_t tid = (size_t)blockDim.x * blockIdx.x + threadIdx.x;
-  uint32_t count = 0;
+  uint64_t count = 0;
   if (tid == 0) {
     for (uint64_t i = 0; i < outer_table_size; i++) {
-      if (hashTable[i].unique_keys != 0) {
-        // count += hashTable[i].unique_keys;
-        // printf("Outer Table range value: %d\n", hashTable[i].range);
-        for (uint32_t j = 0; j < inner_table_capacity; j++) {
-          if (hashTable[i].inner_hashtable[j].key != SENTINEL_KEY &&
-              hashTable[i].inner_hashtable[j].key != TOMBSTONE_KEY)
-            // printf("Key: %d, Value: %d\n", hashTable[i].inner_hashtable[j].key,
-            //        hashTable[i].inner_hashtable[j].value);
-            count++;
-        }
+      // if (hashTable[i].unique_keys != 0) {
+      // count += hashTable[i].unique_keys;
+      // printf("Outer Table range value: %d\n", hashTable[i].range);
+      for (uint32_t j = 0; j < inner_table_capacity; j++) {
+        // if (hashTable[i].inner_hashtable[j].key != SENTINEL_KEY &&
+        //     hashTable[i].inner_hashtable[j].key != TOMBSTONE_KEY)
+        // printf("Key: %d, Value: %d\n", hashTable[i].inner_hashtable[j].key,
+        //        hashTable[i].inner_hashtable[j].value);
+        count++;
       }
+      // }
     }
-    printf("Total unique keys in hashtable: %u\n", count);
+    printf("Total unique keys in hashtable: %lu\n", count);
   }
 }
 
@@ -751,140 +707,6 @@ void printGpuHashTable_CG(HoHGpu *hashTable, uint64_t outer_table_size,
                                     inner_table_capacity);
   cudaDeviceSynchronize();
   printf("Printing the GPU hash table completed\n");
-}
-
-__device__ void migration_data_finder_gpu_CG(
-    HoHGpu *gpuHashTable, HoHGpu *gpu_data, uint32_t *repeated_range_arr,
-    uint32_t wid, uint32_t lane, uint64_t gpuHTOuterSize, uint32_t range_size,
-    uint32_t unique_count, uint32_t repeated_counter) {
-
-  // TODO: Decide on better heuristics (like the buckets from only those slots on which new buckets are coming)
-  uint64_t i = wid;
-
-  while (i < gpuHTOuterSize) {
-
-    bool not_repeated = true;
-    uint32_t m = 0;
-    while (m < repeated_counter) {
-      if (gpuHashTable[i].range == repeated_range_arr[m]) {
-        not_repeated = false;
-        break;
-      }
-      m++;
-    }
-
-    const bool can_replace =
-        ((gpuHashTable[i].unique_keys != 0) && not_repeated);
-    if (can_replace) {
-      uint32_t j = lane;
-
-      while (j < range_size) {
-        gpu_data[wid].inner_hashtable[j].key =
-            gpuHashTable[i].inner_hashtable[j].key;
-        gpuHashTable[i].inner_hashtable[j].key = SENTINEL_KEY;
-        gpu_data[wid].inner_hashtable[j].value =
-            gpuHashTable[i].inner_hashtable[j].value;
-        gpuHashTable[i].inner_hashtable[j].value = SENTINEL_VALUE;
-        j += 32;
-      }
-
-      if (lane == 0) {
-
-        gpu_data[wid].unique_keys = gpuHashTable[i].unique_keys;
-        gpuHashTable[i].unique_keys = 0;
-        // printf("gpu_data: %u\n", gpuHashTable[i].unique_keys);
-        //Reset the hashtable values for ranges that are copied
-        gpu_data[wid].range = gpuHashTable[i].range;
-        gpuHashTable[i].range = UINT32_MAX;
-      }
-      return;
-    }
-    i += unique_count;
-  }
-}
-
-__global__ void migration_gpu_to_cpu_CG(HoHGpu *gpu_data, HoHGpu *gpuHashTable,
-                                        uint32_t *repeated_range_arr,
-                                        uint32_t repeated_counter,
-                                        uint32_t unique_count,
-                                        uint64_t range_size,
-                                        uint64_t gpuHTOuterSize) {
-  size_t tid = (size_t)blockDim.x * blockIdx.x + threadIdx.x;
-  uint32_t lane = tid & 0x1F;
-  size_t wid = tid / 32;
-  if (wid < unique_count) {
-    migration_data_finder_gpu_CG(gpuHashTable, gpu_data, repeated_range_arr,
-                                 wid, lane, gpuHTOuterSize, range_size,
-                                 unique_count, repeated_counter);
-    // printf("gpu_data: %u\n", gpu_data[wid].unique_keys);
-  }
-}
-
-float migrate_data_from_gpu_to_cpu_CG(uint32_t unique_count,
-                                      HoHGpu *gpuHashTable, HoHGpu *gpuData,
-                                      uint32_t *repeated_range_arr,
-                                      uint32_t repeated_counter,
-                                      uint64_t gpuHTOuterSize,
-                                      uint64_t cpuHTOuterSize) {
-  // VIPIN: not required as repeated_range_arr allocated use uvm
-  uint64_t num_blocks = SDIV((unique_count * 32), BlockSize);
-  cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
-  cudaEventRecord(start, 0);
-  migration_gpu_to_cpu_CG<<<num_blocks, BlockSize>>>(
-      gpuData, gpuHashTable, repeated_range_arr, repeated_counter, unique_count,
-      getCapacity(rangeSize), gpuHTOuterSize);
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  float elapsedTime;
-  cudaEventElapsedTime(&elapsedTime, start, stop);
-
-#if defined(DEBUG_MIGRATION)
-
-  for (uint32_t i = 0; i < unique_count; i++) {
-    if (gpuData[i].unique_keys != 0) {
-      printf("Value of unqiue keys: %u for slot: %u\n", gpuData[i].unique_keys,
-             i);
-    }
-  }
-#endif
-
-  return elapsedTime;
-}
-
-float copy_migration_data_in_gpu_CG(HoHGpu *gpuHashtable, HoHCpu *cpu_data,
-                                 uint32_t *unique_count, uint32_t bitmap_size,
-                                 uint32_t range_size, uint64_t outer_table_size,
-                                 uint64_t outer_slots_migrated/*,
-                                 uint32_t *collision_list_outer*/) {
-  auto start = HR::now();
-  uint64_t unique_keys_migrated = 0;
-  for (uint32_t i = 0; i < outer_slots_migrated; i++) {
-    unique_keys_migrated += cpu_data[i].unique_keys;
-  }
-  KeyValue *kvList = nullptr;
-  // (KeyValue *)malloc(sizeof(KeyValue) * unique_keys_migrated);
-  cudaCheckErrorMacro(
-      cudaMallocManaged(&kvList, sizeof(KeyValue) * unique_keys_migrated),
-      "Memalloc failed for key value list to copy migrated data");
-  uint64_t gpuIns = 0;
-  for (uint32_t i = 0; i < outer_slots_migrated; i++) {
-    for (uint32_t j = 0; j < getCapacity(range_size); j++) {
-      if (cpu_data[i].inner_hashtable[j].key != SENTINEL_KEY) {
-        kvList[gpuIns].key = cpu_data[i].inner_hashtable[j].key;
-        kvList[gpuIns].value = cpu_data[i].inner_hashtable[j].value;
-        gpuIns++;
-      }
-    }
-  }
-  auto end = HR::now();
-  float elapsedTime =
-      std::chrono::duration<float, std::milli>(end - start).count();
-  // elapsedTime += batch_insert_gpu_unique_count(
-  //     gpuHashtable, kvList, gpuIns, getCapacity(range_size), unique_count,
-  //     bitmap_size, range_size, outer_table_size /*, collision_list_outer*/);
-  return elapsedTime;
 }
 
 void KeyCheckGPUHoH_CG(HoHGpu *gpuHashTable, uint64_t gpu_outer_slot_size,

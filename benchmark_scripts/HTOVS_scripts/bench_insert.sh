@@ -4,20 +4,20 @@ set -e
 
 operations=(
             2000000000 
-            2500000000 
-            3000000000 
-            3500000000 
-            4000000000
+            # 2500000000 
+            # 3000000000 
+            # 3500000000 
+            # 4000000000
            )
 files=(
        "insert_trace-400e7-100-add-no-dup-MONOTONIC_INCREASE.bin" 
        "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE.bin" 
-       "insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin"
-       "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin"
-       "insert_trace-400e7-100-add-20-dup-SPARSE_REPEAT.bin"
-       "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin"
-       "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin"
-       "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin"
+    #    "insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin"
+    #    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin"
+    #    "insert_trace-400e7-100-add-20-dup-SPARSE_REPEAT.bin"
+    #    "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin"
+    #    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin"
+    #    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin"
        )
 
 
@@ -53,6 +53,8 @@ do
                 ;;
         esac
         mkdir -p "$outdir"
-        ./htovs-opt.out -ops="$ops" -add="$ops" -fil=1 -rem=0 -rns=1 -tra="$file" -gbs=100000000 > "${outdir}/${ops}.log"
+        base=2000000000
+        oversub=$(( (ops - base) * 100 / base ))
+        ./htovs-opt.out -ops="$ops" -add="$ops" -fil=1 -rem=0 -rns=1 -tra="$file" -gbs=1000000000 -rng=1048576 > "${outdir}/${oversub}.log"
     done
 done

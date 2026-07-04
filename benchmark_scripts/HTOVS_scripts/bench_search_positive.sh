@@ -54,6 +54,8 @@ do
         esac
         mkdir -p "$outdir"
         total_ops=$((2 * ops))
-        ./htovs-opt.out -ops="$total_ops" -add="$ops" -rem=0 -fil=1 -rns=1 -tra="$file" -trf="$file" -gbs=1000000000 -rng=1048576 > "${outdir}/${ops}.log"
+        base=2000000000
+        oversub=$(( (ops - base) * 100 / base ))
+        ./htovs-opt.out -ops="$total_ops" -add="$ops" -rem=0 -fil=1 -rns=1 -tra="$file" -trf="$file" -gbs=1000000000 -rng=1048576 > "${outdir}/${oversub}.log"
     done
 done

@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <cstdlib>
 
-#include "cpu_part_batch_HoH.h"
 #include "global-vars.h"
 #if defined(CG)
 #include "gpu_part_batch_HoH_CG.cuh"
@@ -123,20 +122,6 @@ int main(int argc, char *argv[]) {
   DurationFloatMS duration_sort = end_sort - start_sort;
   total_sorting_time += duration_sort.count();
 #endif
-  // uint64_t *dummy_array = nullptr;
-
-  // size_t num_elements = (size_t)(1) << 32;
-
-  // cudaError_t err =
-  //     cudaMalloc((&dummy_array), sizeof(uint64_t) * (size_t)num_elements);
-
-  // if (err != cudaSuccess) {
-  //   std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl;
-  //   return 1;
-  // } else {
-  //   std::cout << "Successfully allocated 32 GB of GPU memory." << std::endl;
-  // }
-
   cout << " USE_TRACE_FILE: " << USE_TRACE_FILE
        << " Bitmap size: " << bitmap_size << " Range size: " << rangeSize
        << " GPU batch size: " << gpuBatchSize << "\n";
@@ -158,6 +143,8 @@ int main(int argc, char *argv[]) {
   uint64_t gpu_outer_slot_size = getCapacity(bitmap_size);
   uint64_t inner_ht_slots = getCapacity(rangeSize);
 
+  // printf("Outer slots: %lu and inner slots:%lu\n", gpu_outer_slot_size,
+  //        inner_ht_slots);
   smallerPrimeCPU = 32;
 #if defined(CG)
   smallerPrimeGPU = COOP_GROUP_SIZE;
@@ -180,7 +167,9 @@ int main(int argc, char *argv[]) {
     float per_iter_batch_time_delete = 0.0f;
     float per_iter_batch_time_search = 0.0f;
 
-    auto *gpuHashTable = createGPUHash_UVM(gpu_outer_slot_size, inner_ht_slots);
+    auto *gpuHashTable =
+        createGPUHash_UVM_CG(gpu_outer_slot_size, inner_ht_slots);
+    // printGpuHashTable_CG(gpuHashTable, gpu_outer_slot_size, inner_ht_slots);
 
 #if defined(OUTER_HASHTABLE_MEM_ADVISE_SA)
     cudaCheckErrorMacro(cudaMemAdvise(gpuHashTable,
@@ -315,13 +304,11 @@ int main(int argc, char *argv[]) {
 #if defined(CG)
       per_iter_insert_time += batch_insert_gpu_unique_count_CG(
           gpuHashTable, gpu_uvm_insertion_batch, per_batch_gpu_ins,
-          gpu_outer_slot_size, inner_ht_slots, rangeSize, uniqueCountList,
-          collision_list_outer);
+          gpu_outer_slot_size, inner_ht_slots, rangeSize);
 #else
       per_iter_insert_time += batch_insert_gpu_unique_count(
           gpuHashTable, gpu_uvm_insertion_batch, per_batch_gpu_ins,
-          gpu_outer_slot_size, inner_ht_slots, rangeSize, uniqueCountList,
-          collision_list_outer);
+          gpu_outer_slot_size, inner_ht_slots, rangeSize);
 #endif
       num_batches++;
       cout << "Batch " << num_batches << " completed with " << per_batch_gpu_ins
@@ -421,14 +408,12 @@ int main(int argc, char *argv[]) {
 #if defined(CG)
         per_iter_delete_time += batch_delete_gpu_unique_count_CG(
             gpuHashTable, gpu_uvm_deletion_batch, per_batch_gpu_del,
-            gpu_outer_slot_size, inner_ht_slots, rangeSize, delete_result,
-            uniqueCountList);
+            gpu_outer_slot_size, inner_ht_slots, rangeSize, delete_result);
 #else
 
         per_iter_delete_time += batch_delete_gpu_unique_count(
             gpuHashTable, gpu_uvm_deletion_batch, per_batch_gpu_del,
-            gpu_outer_slot_size, inner_ht_slots, rangeSize, delete_result,
-            uniqueCountList);
+            gpu_outer_slot_size, inner_ht_slots, rangeSize, delete_result);
 #endif
         num_batches++;
         cout << "Batch " << num_batches << " completed with "
@@ -523,13 +508,11 @@ int main(int argc, char *argv[]) {
 #if defined(CG)
         per_iter_search_time += batch_search_gpu_unique_count_CG(
             gpuHashTable, gpu_uvm_search_batch, per_batch_gpu_find,
-            gpu_outer_slot_size, inner_ht_slots, rangeSize, searched_results,
-            uniqueCountList);
+            gpu_outer_slot_size, inner_ht_slots, rangeSize, searched_results);
 #else
         per_iter_search_time += batch_search_gpu_unique_count(
             gpuHashTable, gpu_uvm_search_batch, per_batch_gpu_find,
-            gpu_outer_slot_size, inner_ht_slots, rangeSize, searched_results,
-            uniqueCountList);
+            gpu_outer_slot_size, inner_ht_slots, rangeSize, searched_results);
 #endif
         num_batches++;
         cout << "Batch " << num_batches << " completed with "
@@ -553,6 +536,9 @@ int main(int argc, char *argv[]) {
 #ifdef KEY_CHECK
     KeyCheckGPUHoH(gpuHashTable, gpu_outer_slot_size, cpu_kvs_insert,
                    NUM_ADD_OPS);
+#endif
+#ifdef PRINT
+    printGpuHashTable_CG(gpuHashTable, gpu_outer_slot_size, inner_ht_slots);
 #endif
 
     total_insert_time += per_iter_insert_time;
