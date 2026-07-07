@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/data/srinjoy/catch2/build_cmake/cmake_install.cmake",
+		"/data/srinjoy/catch2/build_cmake/src/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
