@@ -1,0 +1,141 @@
+[
+    {
+        "type" : "rule",
+        "pythonCodeAssertTrue" : "res = (values['lookup_group_size'] <= values['bucket_cap'])"
+    },
+    {
+        "type" : "dependentParameter",
+        "paraName" : "template",
+        "cotainKeyWord" : "template class GPHOSGPUTable<",
+        "dir" : "geph/include/GPHOS.cuh",
+        "pythonCodeReplaceTo" : "bucket_cap=values['bucket_cap'];lookup_group_size=values['lookup_group_size'];virtual_bucket=values['virtual_bucket'];res = 'template class GPHOSGPUTable<uint{}_t, {}, {}, 8, {}>;'.format(64, bucket_cap, lookup_group_size, virtual_bucket)"
+    },
+    {   
+        "type" : "parameter",
+        "paraName" : "lookup_group_size",
+        "cotainKeyWord" : "const int lookup_group_size",
+        "dir"  : "perf/geph_exp.cuh",
+        "replaceTo": [
+            {"line": "const int lookup_group_size = 4;", "paraValue": 4}
+        ]
+    },
+    {   
+        "type" : "parameter",
+        "paraName" : "bucket_cap",
+        "cotainKeyWord" : "const int bucket_cap",
+        "dir"  : "perf/geph_exp.cuh",
+        "replaceTo": [
+            {"line": "const int bucket_cap = 16;", "paraValue": 16}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "ipv",
+        "cotainKeyWord" : "#define DISABLE_VECTORIZATION_AND_INSTRUCTION_PARALLEL",
+        "dir"  : "geph/include/inner_header/GPHOS_config.cuh",
+        "replaceTo": [
+            {"line": "// #define DISABLE_VECTORIZATION_AND_INSTRUCTION_PARALLEL", "paraValue": true}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "nkpr",
+        "cotainKeyWord" : "#define NKPR",
+        "dir"  : "geph/include/inner_header/GPHOS_config.cuh",
+        "replaceTo": [
+            {"line": "// #define NKPR", "paraValue": false}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "blockCount",
+        "cotainKeyWord" : "#define BLOCK_COUNT",
+        "dir"  : "geph/include/inner_header/GPHOS_config.cuh",
+        "replaceTo": [
+            {"line": "#define BLOCK_COUNT 32768", "paraValue": 32768}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "positive_lookup_in_100",
+        "cotainKeyWord" : "int AUTO_COMP_pos = ",
+        "dir"  : "perf/perf-final.cu",
+        "replaceTo": [
+            {"line": "int AUTO_COMP_pos = 0;", "paraValue": 0}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "control",
+        "cotainKeyWord" : "#define GAO ",
+        "dir"  : "perf/perf-final.cu",
+        "replaceTo": [
+            {"line": "#define GAO 2", "paraValue": 2}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "dataset_name",
+        "cotainKeyWord" : "std::string AUTO_COMP_dataset_name = ",
+        "dir"  : "perf/perf-final.cu",
+        "replaceTo": [
+            {"line": "std::string AUTO_COMP_dataset_name = DATASET_RANDOM;", "paraValue": "random"}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "table_size_GB",
+        "cotainKeyWord" : "size_t AUTO_COMP_table_bytes = ",
+        "dir"  : "perf/perf-final.cu",
+        "replaceTo": [
+            {"line": "size_t AUTO_COMP_table_bytes = (size_t)(1.25*1024*1024*1024);", "paraValue": 1.25},
+            {"line": "size_t AUTO_COMP_table_bytes = (size_t)(1.5*1024*1024*1024);", "paraValue": 1.5},
+            {"line": "size_t AUTO_COMP_table_bytes = (size_t)(1.75*1024*1024*1024);", "paraValue": 1.75},
+            {"line": "size_t AUTO_COMP_table_bytes = (size_t)(2.0*1024*1024*1024);", "paraValue": 2.0}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "competitor",
+        "cotainKeyWord" : "int AUTO_COMP_comp = ",
+        "dir"  : "perf/perf-final.cu",
+        "replaceTo": [
+            {"line": "int AUTO_COMP_comp = COMP_CUDPP;", "paraValue": "COMP_CUDPP"},
+            {"line": "int AUTO_COMP_comp = COMP_WARPCORE;", "paraValue": "COMP_WARPCORE"},
+            {"line": "int AUTO_COMP_comp = COMP_GPH;", "paraValue": "COMP_GPH"}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "virtual_bucket",
+        "cotainKeyWord" : "const int virtual_bucket_n = ",
+        "dir"  : "perf/geph_exp.cuh",
+        "replaceTo": [
+            {"line": "const int virtual_bucket_n = 8;", "paraValue": 8}
+        ]
+    },
+    {
+        "type" : "parameter",
+        "paraName" : "cell_length",
+        "cotainKeyWord" : "const int cell_length =",
+        "dir"  : "perf/geph_exp.cuh",
+        "replaceTo": [
+            {"line": "const int cell_length = 2 * 49152 * 80;", "paraValue": 7864320}
+        ]
+    },
+    {
+        "type" : "resultMetric",
+        "metricName" : "search_timing_ms",
+        "containKeyWord": " search)",
+        "pythonCodeFormatter": "res = float(line.strip().split(' ')[1])"
+    },
+    {
+        "type" : "meta",
+        "outputDir": "res/gph_comp_v3",
+        "compileCommand": "cmake --build build",
+        "runCommand": "./build/perf/perf",
+        "samplePercentage": 1,
+        "ext_ncu_on": false,
+        "ext_ncu_run_condition": "res = ('search_timing_ms' in values) and (int(values['search_timing_ms']) > 0)"
+    }
+]

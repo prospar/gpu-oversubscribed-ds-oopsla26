@@ -1,0 +1,49 @@
+cmake_minimum_required(VERSION 2.8)
+project(dynamic)
+find_package(CUDA QUIET REQUIRED)
+if (NOT CUDA_FOUND)
+    message(STATUS "CUDA not found. Project will not be built.")
+endif(NOT CUDA_FOUND)
+
+include_directories(/usr/local/cuda/samples/common/inc)
+include_directories(${CMAKE_SOURCE_DIR}/ThirdParties/cuda-samples/Common)
+set(CMAKE_CXX_STANDARD 11)
+
+set(Dy
+        data/data_layout.cuh
+        include/dynamic_helpers.cuh include/hash_functions.cuh include/qualifiers.cuh
+        core/dynamic_hash.cuh core/static_cuckoo.cuh
+        thirdParty/cnmem.h thirdParty/cnmem.cpp
+        tools/gputimer.h
+        test/dynamic_test.cu
+        )
+set(St
+        data/data_layout.cuh
+        include/dynamic_helpers.cuh include/hash_functions.cuh include/qualifiers.cuh
+        core/dynamic_hash.cuh core/static_cuckoo.cuh
+        thirdParty/cnmem.h thirdParty/cnmem.cpp
+        tools/gputimer.h
+        test/static_test.cu
+        )
+        add_library(dycuckoo
+        data/data_layout.cuh
+        include/dynamic_helpers.cuh
+        include/hash_functions.cuh
+        include/qualifiers.cuh
+        core/dynamic_hash.cuh
+        core/static_cuckoo.cuh
+        thirdParty/cnmem.h
+        thirdParty/cnmem.cpp
+        tools/gputimer.h
+        test/static_test.cu
+)
+
+# Mark it as PUBLIC so other targets linking to dycuckoo will get these automatically
+target_include_directories(dycuckoo PUBLIC
+${CMAKE_CURRENT_SOURCE_DIR}/include
+${CMAKE_CURRENT_SOURCE_DIR}/thirdParty
+${CMAKE_CURRENT_SOURCE_DIR}/tools
+)
+cuda_add_executable(dynamic_test ${Dy})
+cuda_add_executable(static_test ${St})
+
