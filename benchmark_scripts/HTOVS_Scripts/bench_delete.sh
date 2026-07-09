@@ -28,28 +28,28 @@ do
     do
         case "$file" in
             "insert_trace-400e7-100-add-no-dup-MONOTONIC_INCREASE.bin")
-                outdir="./../results_HTOVS/deletes/MI"
+                outdir="./../results_HTOVS/delete/MI"
                 ;;
             "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE.bin")
-                outdir="./../results_HTOVS/deletes/DU"
+                outdir="./../results_HTOVS/delete/DU"
                 ;;
             "insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin")
-                outdir="./../results_HTOVS/deletes/DR"
+                outdir="./../results_HTOVS/delete/DR"
                 ;;
             "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin")
-                outdir="./../results_HTOVS/deletes/SU"
+                outdir="./../results_HTOVS/delete/SU"
                 ;;
             "insert_trace-400e7-100-add-20-dup-SPARSE_REPEAT.bin")
-                outdir="./../results_HTOVS/deletes/SR"
+                outdir="./../results_HTOVS/delete/SR"
                 ;;
             "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin")
-                outdir="./../results_HTOVS/deletes/DUL"
+                outdir="./../results_HTOVS/delete/DUL"
                 ;;
             "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin")
-                outdir="./../results_HTOVS/deletes/SUR"
+                outdir="./../results_HTOVS/delete/SUR"
                 ;;
             "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin")
-                outdir="./../results_HTOVS/deletes/ZZ"
+                outdir="./../results_HTOVS/delete/ZZ"
                 ;;
         esac
         mkdir -p "$outdir"
