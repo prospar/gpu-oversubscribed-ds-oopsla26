@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 #include "global-vars.h"
-#include "gpu_impl_UVM_CG.cuh"
+#include "./../hashtable/gpu_impl_UVM_CG.cuh"
 
 #include <thrust/device_ptr.h>
 #include <thrust/execution_policy.h>
@@ -102,7 +102,14 @@ void generate_random_lookup_keys(const uint8_t *genome, size_t genome_len,
   }
 }
 
-int main() {
+int main(int argc, char* argv[])  {
+  
+    if (argc < 2) {
+      std::cerr << "Usage: " << argv[0] << " <reserved_gpu_memory_in_GiB>\n";
+      return 1;
+    }
+
+  double reserve_gib = std::stod(argv[1]);
   const uint32_t TAXON_ID = 562; // E. coli
 
   // --------------------------------------------------------
@@ -138,7 +145,7 @@ int main() {
 
   constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
 uint64_t reserve_bytes =
-    static_cast<uint64_t>(std::ceil(6.4 * GiB));
+    static_cast<uint64_t>(std::ceil(reserve_gib  * GiB));
   size_t num_elements = reserve_bytes / sizeof(uint64_t);
 
   cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
@@ -252,7 +259,7 @@ uint64_t reserve_bytes =
     cudaCheckErrorMacro(
         cudaMemPrefetchAsync(search_values,
                              (per_batch_gpu_find * sizeof(uint32_t)), 0),
-        "Prefetching hint of the delete status failed");
+        "Prefetching hint of the search status failed");
     // auto start_find = HRClock::now();
     // thrust::sort(thrust::cuda::par(alloc), search_keys,
     //              search_keys + per_batch_gpu_find,
@@ -278,10 +285,10 @@ uint64_t reserve_bytes =
   // }
 
   // cout << "Total matches of dog datset in mouse dataset : " << count << "\n";
-  cout << "Total time taken for inserting mouse dataset : " << insert_time
-       << " (ms)\n";
-  cout << "Total time taken for searching dog dataset : " << search_time
-       << " (ms)\n";
+  cout << "Total time taken (ms): " << insert_time
+       << "\n";
+  cout << "Total time taken(classify) (ms): " << search_time
+       << "\n";
   // --------------------------------------------------------
   // Cleanup
   // --------------------------------------------------------

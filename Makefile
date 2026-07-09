@@ -22,6 +22,7 @@ $(shell mkdir -p $(BIN))
 HT_OVS_Path=./gpu/hashtable
 HT_UVM_Path=./gpu/hashtable
 CUCO_Path= ./cuCollections/tests/static_map
+APP_Path=./gpu/applications
 
 STATS_DEBUG=-DKEY_CHECK
 
@@ -70,11 +71,24 @@ htovs-opt-32: ${HT_OVS_Path}/driver_hetero_hash_batch.cu
 
 #cuCollections Commands:
 cuco-insert: ${CUCO_Path}/insert_or_assign_test.cu
-	${NVCC} ${CUDAFLAGS} --expt-extended-lambda ${CUDAINC} $< -o ${BIN}/$@.out 
+	${NVCC} ${CUDAFLAGS} --expt-extended-lambda ${CUDAINC} $< -o $(BIN)/$@.out 
 	
 cuco-search: ${CUCO_Path}/find_test.cu
-	${NVCC} ${CUDAFLAGS} --expt-extended-lambda ${CUDAINC} $< -o ${BIN}/$@.out 
+	${NVCC} ${CUDAFLAGS} --expt-extended-lambda ${CUDAINC} $< -o $(BIN)/$@.out 
 	
+#Applications Commands
+metacache-htuvm: ${APP_Path}/metacache.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+
+metacache-htovs: ${APP_Path}/metacache_HoH.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+
+kmer-htuvm: ${APP_Path}/kmer_counting.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+	
+kmer-htovs: ${APP_Path}/kmer_counting_HoH.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+
 clean:
 	cd ${HH_Path} && rm *.out && cd ../..
 	cd ${UVM_HT_Path} && rm driver_*.out && cd ../..

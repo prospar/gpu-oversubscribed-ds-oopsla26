@@ -1,4 +1,5 @@
-// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70 kmer_counting.cu -o kmer_count -I../../include
+// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70
+// kmer_counting.cu -o kmer_count -I../../include
 #include "constants.h"
 #include "datatypes.h"
 #include "functions.h"
@@ -108,7 +109,14 @@ uint32_t build_kmer_key_host(const uint8_t *genome, size_t pos) {
 }
 
 // driver function
-int main(int argc, char **argv) {
+int main(int argc, char* argv[])  {
+  
+    if (argc < 2) {
+      std::cerr << "Usage: " << argv[0] << " <reserved_gpu_memory_in_GiB>\n";
+      return 1;
+    }
+
+  double reserve_gib = std::stod(argv[1]);
 
   // Load genome (host ASCII)
   std::string genome_str =
@@ -136,7 +144,7 @@ int main(int argc, char **argv) {
   uint64_t *dummy_array = nullptr;
 
   constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
-  uint64_t reserve_bytes = static_cast<uint64_t>(std::ceil(6.4 * GiB));
+  uint64_t reserve_bytes = static_cast<uint64_t>(std::ceil(reserve_gib * GiB));
   size_t num_elements = reserve_bytes / sizeof(uint64_t);
 
   cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
@@ -159,6 +167,9 @@ int main(int argc, char **argv) {
   uint64_t inner_ht_slots = getCapacity(rangeSize);
 
   auto *table = createGPUHash_UVM_CG(gpu_outer_slot_size, inner_ht_slots);
+  cudaCheckErrorMacro(
+      cudaMemPrefetchAsync(table, (gpu_outer_slot_size * sizeof(HoHGpu)), 0),
+      "Prefetching hint of hashtable failed");
 
   KeyValue *d_kmer_keys = new KeyValue[num_kmers];
   uint32_t *helper_arr = new uint32_t[num_kmers];
@@ -220,7 +231,7 @@ int main(int argc, char **argv) {
     // float ms;
     // cudaEventElapsedTime(&ms, start, stop);
   }
-  std::cout << "K-mer count time (GPU): " << insert_time << " ms\n";
+  std::cout << "Total time taken (ms): " << insert_time << "\n";
 
   // uint64_t count = count_unique(helper_arr, num_kmers);
 
@@ -239,6 +250,6 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-//TODO:
-// add thrust sorting based on only keys
-// integrate skiplist
+// TODO:
+//  add thrust sorting based on only keys
+//  integrate skiplist

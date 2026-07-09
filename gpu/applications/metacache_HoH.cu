@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 #include "global-vars.h"
-#include "gpu_part_batch_HoH_CG.cuh"
+#include "./../hashtable/gpu_part_batch_HoH_CG.cuh"
 
 #include <thrust/device_ptr.h>
 #include <thrust/execution_policy.h>
@@ -102,7 +102,14 @@ void generate_random_lookup_keys(const uint8_t *genome, size_t genome_len,
   }
 }
 
-int main() {
+int main(int argc, char* argv[])  {
+  
+    if (argc < 2) {
+      std::cerr << "Usage: " << argv[0] << " <reserved_gpu_memory_in_GiB>\n";
+      return 1;
+    }
+
+  double reserve_gib = std::stod(argv[1]);
   const uint32_t TAXON_ID = 562; // E. coli
 
   // --------------------------------------------------------
@@ -141,7 +148,7 @@ int main() {
   uint64_t *dummy_array = nullptr;
 
   constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
-  uint64_t reserve_bytes = static_cast<uint64_t>(std::ceil(6.4 * GiB));
+  uint64_t reserve_bytes = static_cast<uint64_t>(std::ceil(reserve_gib * GiB));
   size_t num_elements = reserve_bytes / sizeof(uint64_t);
 
   cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
@@ -158,10 +165,15 @@ int main() {
   uint64_t inner_ht_slots = getCapacity(rangeSize);
 
   auto *table = createGPUHash_UVM(gpu_outer_slot_size, inner_ht_slots);
-  cudaCheckErrorMacro(cudaMemAdvise(table,
-                                    (gpu_outer_slot_size * sizeof(HoHGpu)),
-                                    cudaMemAdviseSetAccessedBy, 0),
-                      "Memadvise SetAccessedBy hint failure for hashtable");
+  // cudaCheckErrorMacro(cudaMemAdvise(table,
+  //                                   (gpu_outer_slot_size * sizeof(HoHGpu)),
+  //                                   cudaMemAdviseSetAccessedBy, 0),
+  //                     "Memadvise SetAccessedBy hint failure for hashtable");
+
+  cudaCheckErrorMacro(
+      cudaMemPrefetchAsync(table, (gpu_outer_slot_size * sizeof(HoHGpu)),
+                           0),
+      "Prefetching hint of hashtable failed");
 
   uint32_t *h_keys = new uint32_t[num_kmers];
   uint32_t *h_values = new uint32_t[num_kmers];
@@ -280,10 +292,8 @@ int main() {
   // --------------------------------------------------------
   // Results
   // --------------------------------------------------------
-  cout << "Total time taken for inserting mouse dataset : " << insert_time
-       << " (ms)\n";
-  cout << "Total time taken for searching dog dataset : " << search_time
-       << " (ms)\n";
+  cout << "Total time taken (ms): " << insert_time << "\n";
+  cout << "Total time taken(classify) (ms): " << search_time << "\n";
   // ---------------------
 
   // --------------------------------------------------------

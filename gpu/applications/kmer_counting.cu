@@ -108,7 +108,14 @@ uint32_t build_kmer_key_host(const uint8_t *genome, size_t pos) {
 }
 
 // driver function
-int main(int argc, char **argv) {
+int main(int argc, char* argv[])  {
+  
+    if (argc < 2) {
+      std::cerr << "Usage: " << argv[0] << " <reserved_gpu_memory_in_GiB>\n";
+      return 1;
+    }
+
+  double reserve_gib = std::stod(argv[1]);
 
   // Load genome (host ASCII)
   std::string genome_str =
@@ -136,7 +143,7 @@ int main(int argc, char **argv) {
   uint64_t *dummy_array = nullptr;
 
   constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
-  uint64_t reserve_bytes = static_cast<uint64_t>(std::ceil(6.4 * GiB));
+  uint64_t reserve_bytes = static_cast<uint64_t>(std::ceil(reserve_gib * GiB));
   size_t num_elements = reserve_bytes / sizeof(uint64_t);
 
   cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
@@ -210,7 +217,7 @@ int main(int argc, char **argv) {
     // float ms;
     // cudaEventElapsedTime(&ms, start, stop);
   }
-  std::cout << "K-mer count time (GPU): " << insert_time << " ms\n";
+  std::cout << "Total time taken (ms): " << insert_time << "\n";
 
   // uint64_t count = count_unique(helper_arr, num_kmers);
 
