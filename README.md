@@ -1,5 +1,24 @@
 # gpu-oversubscribed-ds-oopsla26
 
+Space Requirements: At least 50GB or more space is required to store the trace files for the evaluations.
+
+# Trace generations
+
+
+# For HTUVM and HTOVS
+
+First run the Makefile with arguments "uvm-opt" and "htovs-opt", this will generate the required binaries of the optimal configurations for both HTUVM and HTOVS in the bin folder under main directory.
+
+Now run the scripts present in benchmark_scripts folder. HTUVM and HTOVS will have separate subfolders for scripts. Under that every kernel will have different scripts like insert, delete, positive search queries and negative search queries. After completion of run the "Bar_Comparison_main_results.py" file in the Graph_Plotting_Scripts folder with the arguments of <results_HTOVS/results_HTUVM/results_CUCO> <results_HTOVS/results_HTUVM/results_CUCO> <insert/delete/search_positive/search_negative> <insert/delete/search>.
+
+The plots for each of the configuration will be generated.
+
+# For Applications
+
+The same steps as HTUVM and HTOVS needs to be followed. The Makefile contains both make commands for metagenomics and k-mer counter applications. After make command run the benchmark script for application under Applications_Scripts subfolder. Then run the graph plotting script: "Bar_Compariso_applications.py" with commands <htovs/htuvm> <htuvm/htovs>.
+
+It will generate the plots for metagenomics.
+
 <!-- For GPH -->
 
 # For GPH
@@ -28,3 +47,6 @@ To build and run GPH:
 Before running the command ./perf make sure to generate the traces by running the tracegen scripts and also run the file: "generate_pos_neg_workload.py" in the data source folder.
 
 After updating the trace file path or memory reservation the commands(6-8) needs to be ran again.
+
+# For Motivation
+
