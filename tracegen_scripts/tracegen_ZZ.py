@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from pathlib import Path
 
 TOTAL_ELEMENTS = 4_000_000_000
 BUFFER_SIZE = 10_000_000  # Number of uint32s written at a time

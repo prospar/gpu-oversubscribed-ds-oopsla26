@@ -23,9 +23,9 @@ def build_dataset(results_folder, folder, kernel):
     """
 
     pattern = re.compile(
-        rf"Total time taken by {re.escape(kernel)} kernel(?: including sort)? \(ms\):\s*([\d.]+)"
+        rf"Total time taken by {re.escape(kernel)} kernel\s*(?:\(including sort\)|including sort)?\s*\(ms\):\s*([\d.]+)",
+        re.IGNORECASE,
     )
-
     data = {"Oversubscription Level": oversub_levels}
 
     for algo in algorithms:
@@ -125,14 +125,14 @@ def main():
     # --------------------------------------------------
 
     colors = [
-        "lightgray",
+        "red",
+        "green",
+        "blue",
+        "yellow",
+        "purple",
+        "brown",
+        "orange",
         "black",
-        "silver",
-        "dimgray",
-        "gray",
-        "gainsboro",
-        "darkslategray",
-        "darkgray",
     ]
 
     bar_width = 0.10
@@ -188,7 +188,7 @@ def main():
 
     plt.tight_layout()
 
-    plt.show()
+    plt.savefig("speedup.pdf", dpi=300)
 
 
 if __name__ == "__main__":

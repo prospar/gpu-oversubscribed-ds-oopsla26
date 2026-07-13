@@ -12,7 +12,13 @@ reserve=(
 )
 
 for res in "${reserve[@]}"; do
-    outdir="../results_applications/htovs/${res}"
+    if [ "$res" = 2.91 ]; then
+        outdir="../results_applications/htovs/10"
+    elif [ "$res" = 4.92 ]; then
+        outdir="../results_applications/htovs/30"
+    else
+        outdir="../results_applications/htovs/50"
+    fi
     mkdir -p "$outdir"
 
     ./metacache-htovs.out "$res" > "$outdir/metacache.log"

@@ -64,7 +64,7 @@ def parse_kmer(logfile):
     with open(logfile, "r") as f:
         text = f.read()
 
-    build = re.search(
+    match = re.search(
         r"Total time taken \(ms\):\s*([\d.]+)",
         text,
     )
@@ -78,8 +78,8 @@ def parse_kmer(logfile):
 def build_dataset(results_folder):
     """
     results_folder:
+        htov
         htuvm
-        htovs
     """
 
     data = {
@@ -133,7 +133,7 @@ def main():
 
     parser.add_argument(
         "results_folder1",
-        help="First results folder (e.g. htovs)"
+        help="First results folder (e.g. htov)"
     )
 
     parser.add_argument(
@@ -171,9 +171,9 @@ def main():
     # --------------------------------------------------
 
     colors = [
-        "lightgray",
-        "black",
-        "silver",
+        "red",
+        "blue",
+        "green",
     ]
 
     bar_width = 0.20
@@ -240,7 +240,7 @@ def main():
     )
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig("speedup.pdf", dpi=300)
 
 
 if __name__ == "__main__":
