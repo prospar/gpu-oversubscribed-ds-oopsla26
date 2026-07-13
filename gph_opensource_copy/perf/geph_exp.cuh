@@ -120,7 +120,7 @@ void geph_find(uint32_t *keys_to_insert, uint32_t *vals_to_insert,
     //  1000.00);
   }
 
-  std::cout << "Total insert time (ms): " << insert_time << "\n";
+  std::cout << "Total time taken by insert kernel (ms): " << insert_time << "\n";
 
   //   //   stage 2 : find key
   //   hash_table.lookup_key_return_value_CSI(keys_to_find, check_h, find_n,

@@ -191,7 +191,7 @@ int main(int argc, char* argv[])  {
 
   while (cpu_counter < num_kmers) {
     uint64_t per_batch_gpu_ins = 0;
-    float batch_timing = 0.0f;
+    // float batch_timing = 0.0f;
     while (per_batch_gpu_ins < gpu_batch && cpu_counter < num_kmers) {
 
       d_uvm_batch[per_batch_gpu_ins].key = d_kmer_keys[cpu_counter].key;

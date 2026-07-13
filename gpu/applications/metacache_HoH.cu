@@ -164,7 +164,7 @@ int main(int argc, char* argv[])  {
   uint64_t gpu_outer_slot_size = bitmap_size;
   uint64_t inner_ht_slots = getCapacity(rangeSize);
 
-  auto *table = createGPUHash_UVM(gpu_outer_slot_size, inner_ht_slots);
+  auto *table = createGPUHash_UVM_CG(gpu_outer_slot_size, inner_ht_slots);
   // cudaCheckErrorMacro(cudaMemAdvise(table,
   //                                   (gpu_outer_slot_size * sizeof(HoHGpu)),
   //                                   cudaMemAdviseSetAccessedBy, 0),
@@ -183,8 +183,6 @@ int main(int argc, char* argv[])  {
     h_values[i] = TAXON_ID;
   }
 
-  uint32_t *uniqueCountList = nullptr;
-  uint32_t *collision_list_outer = nullptr;
 
   static simple_cached_allocator<KeyValue> alloc;
   size_t cpu_counter = 0;
@@ -223,7 +221,7 @@ int main(int argc, char* argv[])  {
 
     insert_time += batch_insert_gpu_unique_count_CG(
         table, d_uvm_batch, per_batch_gpu_ins, gpu_outer_slot_size,
-        inner_ht_slots, rangeSize, uniqueCountList, collision_list_outer);
+        inner_ht_slots, rangeSize);
   }
 
   // --------------------------------------------------------
@@ -286,7 +284,7 @@ int main(int argc, char* argv[])  {
 
     search_time += batch_search_gpu_unique_count_CG(
         table, search_keys, per_batch_gpu_find, gpu_outer_slot_size,
-        inner_ht_slots, rangeSize, search_values, uniqueCountList);
+        inner_ht_slots, rangeSize, search_values);
   }
 
   // --------------------------------------------------------

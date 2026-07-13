@@ -1,9 +1,11 @@
 # gpu-oversubscribed-ds-oopsla26
 
 Space Requirements: At least 50GB or more space is required to store the trace files for the evaluations.
+In the bashrc export the absolute path for the traces like: export TRACE_ROOT="absolute/path/for/Traces"
+
 
 # Trace generations
-
+The trace generation scripts are present in tracegen_scripts folder. Running that will generate all the traces required for the experiments within a new folder call Traces.
 
 # For HTUVM and HTOVS
 
@@ -15,7 +17,7 @@ The plots for each of the configuration will be generated.
 
 # For Applications
 
-The same steps as HTUVM and HTOVS needs to be followed. The Makefile contains both make commands for metagenomics and k-mer counter applications. After make command run the benchmark script for application under Applications_Scripts subfolder. Then run the graph plotting script: "Bar_Compariso_applications.py" with commands <htovs/htuvm> <htuvm/htovs>.
+The same steps as HTUVM and HTOVS needs to be followed. The Makefile contains both make commands for metagenomics and k-mer counter applications. After make command run the benchmark script for application under Applications_Scripts subfolder. Then run the graph plotting script: "Bar_Comparison_applications.py" with commands <htovs/htuvm> <htuvm/htovs>.
 
 It will generate the plots for metagenomics.
 
