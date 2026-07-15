@@ -35,12 +35,12 @@ def parse_metacache(logfile):
         text = f.read()
 
     build = re.search(
-        r"Total time taken \(ms\):\s*([\d.]+)",
+        r"Total time taken \(ms\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)",
         text,
     )
 
     classify = re.search(
-        r"Total time taken\(classify\) \(ms\):\s*([\d.]+)",
+        r"Total time taken\(classify\) \(ms\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)",
         text,
     )
 
@@ -65,7 +65,7 @@ def parse_kmer(logfile):
         text = f.read()
 
     match = re.search(
-        r"Total time taken \(ms\):\s*([\d.]+)",
+        r"Total time taken \(ms\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)",
         text,
     )
 

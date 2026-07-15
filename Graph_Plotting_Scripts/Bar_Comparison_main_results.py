@@ -23,7 +23,7 @@ def build_dataset(results_folder, folder, kernel):
     """
 
     pattern = re.compile(
-        rf"Total time taken by {re.escape(kernel)} kernel\s*(?:\(including sort\)|including sort)?\s*\(ms\):\s*([\d.]+)",
+        rf"Total time taken by {re.escape(kernel)} kernel\s*(?:\(including sort\)|including sort)?\s*\(ms\):\s*([^\s]+)",
         re.IGNORECASE,
     )
     data = {"Oversubscription Level": oversub_levels}

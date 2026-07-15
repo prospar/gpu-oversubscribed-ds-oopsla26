@@ -24,7 +24,7 @@ def build_dataset(results_folder, kernel):
 
 
     pattern = re.compile(
-        rf"Total time taken by {re.escape(kernel)} kernel(?: including sort)? \(ms\):\s*([\d.]+)"
+        rf"Total time taken by {re.escape(kernel)} kernel(?: including sort)? \(ms\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"
     )
 
     workloads = [
