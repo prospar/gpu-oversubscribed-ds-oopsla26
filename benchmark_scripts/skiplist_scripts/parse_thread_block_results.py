@@ -96,7 +96,7 @@ def parse_file(filepath, results):
                 "Trace Type": trace_type
             }
 
-        results[trace_type][f'blk{thread_block_size}'] = record["Insert Time"]
+        results[trace_type][f'{thread_block_size}'] = record["Insert Time"]
 
     except Exception as e:
         print(f"Could not read {filepath}: {e}")
@@ -118,15 +118,15 @@ def write_csv(results, outfile="parsed_results_table9.csv"):
 
     fields = [
         "Trace Type",
-        'blk64',
-        'blk256',
-        'blk1024', 
-        'blk4096', 
-        'blk16384',
-        'blk262144',
-        'blk65536',
-        'blk1048576',
-        'blk4194304'
+        '64',
+        '256',
+        '1024', 
+        '4096', 
+        '16384',
+        '65536',
+        '262144',
+        '1048576',
+        '4194304'
     ]
 
     with open(outfile, "w", newline="", encoding="utf-8") as f:
