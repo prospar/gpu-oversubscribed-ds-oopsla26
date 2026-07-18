@@ -54,11 +54,14 @@ size_t gpuL2CacheSize = 0;
 std::string addTrace, delTrace, findTrace;
 PartitionMode mode = PartitionMode::OFFLOAD;
 
-//Option for skiplist
+// Option for skiplist
 uint32_t NUM_BLOCKS = 512;  // Number of Blocks
 uint32_t BLOCK_SIZE = 512;  // Number of theads per block
 uint32_t OVERSUB_RATIO = 0; // Oversubscription ratio
 uint32_t NUM_CHUNKS = 1024;
+uint32_t KEYS_PER_WARP = 1;   // keys per warp min:1(gfsl baseline) max:300
+uint32_t WAITING_WARPS = 512; // control the warp that proceed sequentially
+bool PREDECESSOR_SEARCH = false;
 
 struct iterationTime {
   uint32_t iteration;
@@ -66,6 +69,9 @@ struct iterationTime {
   float total_insert_time;
   float total_delete_time;
   float total_search_time;
+  float total_predecessor_time;
   float total_batch_time;
   float total_sort_time;
 };
+
+int numGPU = 1;

@@ -43,9 +43,7 @@ using std::filesystem::path;
 
 /** Helper for CUDA errors */
 #define cudaCheckErrorMacro(ans, msg)                                          \
-  {                                                                            \
-    gpuAssert((ans), msg, __FILE__, __LINE__);                                 \
-  }
+  { gpuAssert((ans), msg, __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, string msg, const char *file, int line,
                       bool abort = true) {
   if (code != cudaSuccess) {
@@ -187,7 +185,7 @@ bool compareByRangeDS(const uint32_t a, const uint32_t b) {
   return (a >> power_of_two) < (b >> power_of_two);
 }
 
-//Comparator functor for thrust
+// Comparator functor for thrust
 struct CompareByRangeShift {
   uint32_t shift;
 
@@ -212,7 +210,7 @@ private:
     return static_cast<uint32_t>(x);
   }
 };
-//Comparator functor for thrust in case of delete and search
+// Comparator functor for thrust in case of delete and search
 struct CompareByRangeShiftDS {
   int shift;
 
@@ -225,7 +223,7 @@ struct CompareByRangeShiftDS {
   }
 };
 
-//comparator functor for thrust
+// comparator functor for thrust
 struct CompareByKey {
   template <typename A, typename B>
   __host__ __device__ bool operator()(const A &a, const B &b) const {
@@ -257,7 +255,7 @@ struct CompareByKeyDS {
   }
 };
 
-//Custom allocator for Thrust
+// Custom allocator for Thrust
 template <typename T> struct simple_cached_allocator {
   using value_type = T;
 
@@ -321,7 +319,10 @@ void validFlagsDescription() {
        << "ovr: oversubscription ratio for skiplist\n"
        << "tra: insertion trace file name\n"
        << "trr: deletion trace file name\n"
-       << "trf: search trace file name\n";
+       << "trf: search trace file name\n"
+       << "kpw: Keys per warp for skiplist\n"
+       << "wtw: number of warps participate in waiting\n"
+       << "pss: enable predecessor search in skiplist\n";
 }
 
 /** Parse command line flags and initialize the variables */
@@ -380,6 +381,13 @@ int parse_args(char *arg) {
     BLOCK_SIZE = val;
   } else if (s1 == "-ovr") { // oversubscription ratio
     OVERSUB_RATIO = (float)val;
+  } else if (s1 == "-kpw") { // keys per warp
+    KEYS_PER_WARP = val;
+  } else if (s1 == "-wtw") { // number of warp participate in waiting
+    WAITING_WARPS = val;
+  } else if (s1 == "-pss") { // enable predecessor search
+    PREDECESSOR_SEARCH = (bool)val;
+    // cout << "Predecessor search set to " << PREDECESSOR_SEARCH << "\n";
   } else {
     cout << "Unsupported flag:" << s1 << "\n";
     cout << "Use the below list flags:\n";
@@ -575,10 +583,21 @@ path getProjectRoot() {
   return projectRootPath;
 }
 
+path getSLTraceRoot() {
+  string projectRootStr = getenv(SL_TRACE_ROOT.c_str());
+  path projectRootPath = projectRootStr;
+  return projectRootPath;
+}
 // TODO: extend for the different percent of duplicate in each add,
 //  delete, and search
 string constructTraceFilename(string traceFileName) {
   path currPath = getProjectRoot();
+  path filePathStr = currPath / traceFileName;
+  return filePathStr;
+}
+
+string constructTraceFilenameSL(string traceFileName) {
+  path currPath = getSLTraceRoot();
   path filePathStr = currPath / traceFileName;
   return filePathStr;
 }
@@ -664,25 +683,182 @@ bool checkTraceFiles(const string &addTraceFile, const string &delTraceFile,
   return traceStatus;
 }
 
-// /** Assumes a single GPU, device 0.
-//     FIXME: SB: Is this method doing what it is supposed to do?
-//  */
-// bool getGPUConfig() {
-//   bool status = true;
-//   int deviceCount = 0;
-//   cudaGetDeviceCount(&deviceCount);
-//   for (int i = 0; i < deviceCount; ++i) {
-//     cudaDeviceProp deviceProperties;
-//     cudaGetDeviceProperties(&deviceProperties, i);
-//     // ... (rest of the code)
-//     // total memory in bytes
-//     totalAvailableMemory = deviceProperties.totalGlobalMem;
-//     if (deviceProperties.l2CacheSize > 0) {
-//       gpuL2Size = deviceProperties.l2CacheSize;
-//     } else {
-//       cout << "Device " << i << " No L2 Cache\n";
-//       status = false;
-//     }
-//   }
-//   return status;
-// }
+bool checkTraceFilesSL(const string &addTraceFile, const string &delTraceFile,
+                       const string &findTraceFile, KeyValue *kvs_insert,
+                       uint32_t *keys_del, uint32_t *keys_lookup) {
+  uint64_t addOp = NUM_ADD_OPS;
+  uint64_t remOp = NUM_REM_OPS;
+  uint64_t searchOp = NUM_OPS - (addOp + remOp);
+
+  // filepath for different operations
+  string path_insert_keys = constructTraceFilenameSL(addTraceFile);
+  cout << "[info] Trace file for insert operations: " << path_insert_keys
+       << "\n";
+
+  if (std::filesystem::is_directory(path_insert_keys)) {
+    cerr << "[error] Wrong insert trace\n";
+    std::exit(EXIT_FAILURE);
+  }
+
+  bool traceStatus = std::filesystem::exists(path_insert_keys);
+  if (traceStatus) {
+    uint32_t *h_keys_insert = (uint32_t *)malloc(sizeof(uint32_t) * addOp);
+    read_data(path_insert_keys, addOp, h_keys_insert);
+    std::mt19937 mt_value(RANDOM_SEED);
+    std::uniform_int_distribution<uint32_t> valueDistribution(1,
+                                                              UINT32_MAX - 1);
+    // Storing values in trace will increase the storage overhead and file IO
+    // overhead. We store only the keys because that is what matters.
+    for (uint64_t i = 0; i < addOp; i++) {
+      kvs_insert[i].key = h_keys_insert[i];
+      kvs_insert[i].value = valueDistribution(mt_value);
+    }
+    // read all values from trace, free intermediate array
+    free(h_keys_insert);
+  } else {
+    cout << "[error] Insert trace does not exist, run trace generation "
+            "script\n";
+    assert(traceStatus);
+  }
+
+  // if no delete queries, path is empty
+  if (remOp) {
+    string path_delete_keys = constructTraceFilenameSL(delTraceFile);
+    cout << "[info] Trace file for delete operations: ";
+    cout << path_delete_keys << "\n";
+    traceStatus = std::filesystem::exists(path_delete_keys);
+    if (traceStatus) {
+      uint32_t *h_keys_delete = (uint32_t *)malloc(sizeof(uint32_t) * remOp);
+      read_data(path_delete_keys, remOp, h_keys_delete);
+      for (uint64_t i = 0; i < remOp; i++) {
+        keys_del[i] = h_keys_delete[i];
+      }
+      free(h_keys_delete);
+    } else {
+      cout << "Delete trace does not exists, Run trace generation scripts\n";
+      assert(traceStatus);
+    }
+  }
+  // if no search queries, path is empty
+  if (searchOp) {
+    string path_search_keys = constructTraceFilenameSL(findTraceFile);
+    cout << "[info] Trace file for search operations: ";
+    cout << path_search_keys << std::endl;
+    traceStatus = std::filesystem::exists(path_search_keys);
+    if (traceStatus) {
+      uint32_t *h_keys_search = (uint32_t *)malloc(sizeof(uint32_t) * searchOp);
+      read_data(path_search_keys, searchOp, h_keys_search);
+      for (uint64_t i = 0; i < searchOp; i++) {
+        keys_lookup[i] = h_keys_search[i];
+      }
+      free(h_keys_search);
+    } else {
+      cout << "Search trace does not exists, run trace generation script\n";
+      assert(traceStatus);
+    }
+  }
+
+  cout << "[info] Done processing trace files\n";
+  return traceStatus;
+}
+
+std::vector<DeviceMemReservation> query_and_reserve() {
+  int device_count = 0;
+  cudaCheckErrorMacro(cudaGetDeviceCount(&device_count),
+                      "Failed to query CUDA device count");
+
+  if (device_count == 0)
+    throw std::runtime_error("No CUDA-capable devices found.");
+  device_count = std::min(device_count, numGPU);
+  std::vector<DeviceMemReservation> reservations;
+  reservations.reserve(static_cast<size_t>(device_count));
+
+  for (int dev = 0; dev < device_count; ++dev) {
+
+    // switch to this device
+    cudaCheckErrorMacro(cudaSetDevice(dev),
+                        "Failed to set CUDA device " + to_string(dev));
+
+    // query memory
+    cudaDeviceProp prop{};
+    cudaCheckErrorMacro(cudaGetDeviceProperties(&prop, dev),
+                        "Failed to get properties for device " +
+                            to_string(dev));
+
+    size_t free_bytes = 0;
+    size_t total_bytes = 0;
+    cudaCheckErrorMacro(cudaMemGetInfo(&free_bytes, &total_bytes),
+                        "Failed to get memory info for device " +
+                            to_string(dev));
+
+    printf("[Device %d] %-30s  total = %7.2f GiB  free = %7.2f GiB\n", dev,
+           prop.name, static_cast<double>(total_bytes) / GiB,
+           static_cast<double>(free_bytes) / GiB);
+
+    // sanity-check: device must have more than available memory
+    if (total_bytes <= AVAIL_MEM) {
+      printf("  [Device %d] WARNING: total memory (%.2f GiB) ≤ available "
+             "(4 GiB). Skipping reservation.\n",
+             dev, static_cast<double>(total_bytes) / GiB);
+      DeviceMemReservation r;
+      r.device_id = dev;
+      r.total_bytes = total_bytes;
+      r.reserved = 0;
+      r.ptr = nullptr;
+      reservations.push_back(r);
+      continue;
+    }
+
+    // Occupy (total - 4 GiB).
+    // If current free memory is less than that (other processes already
+    // hold some), we clamp to avoid over-allocating.
+    const size_t desired = total_bytes - AVAIL_MEM;
+    const size_t to_alloc = (free_bytes >= desired)  ? desired
+                            : free_bytes > AVAIL_MEM ? free_bytes - AVAIL_MEM
+                                                     : 0;
+
+    if (to_alloc == 0) {
+      printf("  [Device %d] memory already occupied by other "
+             "allocations. Skipping.\n",
+             dev);
+      DeviceMemReservation r;
+      r.device_id = dev;
+      r.total_bytes = total_bytes;
+      r.reserved = 0;
+      r.ptr = nullptr;
+      reservations.push_back(r);
+      continue;
+    }
+
+    // allocate
+    void *ptr = nullptr;
+    cudaCheckErrorMacro(cudaMalloc(&ptr, to_alloc),
+                        "Failed to reserve memory on device " + to_string(dev));
+
+    printf("  [Device %d] Reserved %.2f GiB  (%.2f GiB memory remains)\n", dev,
+           static_cast<double>(to_alloc) / GiB,
+           static_cast<double>(total_bytes - to_alloc) / GiB);
+
+    DeviceMemReservation r;
+    r.device_id = dev;
+    r.total_bytes = total_bytes;
+    r.reserved = to_alloc;
+    r.ptr = ptr;
+    reservations.push_back(r);
+  }
+
+  return reservations;
+}
+
+void release_reservations(std::vector<DeviceMemReservation> &reservations) {
+  for (auto &r : reservations) {
+    if (r.ptr == nullptr)
+      continue;
+    cudaCheckErrorMacro(cudaSetDevice(r.device_id),
+                        "Failed to set device for releasing reservation");
+    cudaCheckErrorMacro(cudaFree(r.ptr), "Failed to free reserved memory");
+    printf("[Device %d] Reservation freed.\n", r.device_id);
+    r.ptr = nullptr;
+    r.reserved = 0;
+  }
+}

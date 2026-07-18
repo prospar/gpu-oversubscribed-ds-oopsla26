@@ -43,7 +43,6 @@ const int BLOCKDIMX = blockDim.x;
 // Environment variable name for trace location
 static const string PROJECT_ROOT_DIR = "TRACE_ROOT";
 
-
 static const uint32_t MAX_PROBING_RETRIES = (1 << 30);
 const uint64_t PROBE_RETRIES = (~uint64_t(0) - 1024);
 
@@ -55,3 +54,9 @@ static const uint32_t EMPTY_UNIQUE_COUNT = 0;
 #define COOP_GROUP_SIZE 16
 #endif
 
+// batch size const for skip list
+const uint32_t SL_BATCH_SIZE = 500000000;
+static const string SL_TRACE_ROOT = "SL_TRACE_ROOT";
+
+static constexpr size_t GiB = 1ULL << 30;       // 1 073 741 824 bytes
+static constexpr size_t AVAIL_MEM = 4ULL * GiB; // keep 4 GiB free

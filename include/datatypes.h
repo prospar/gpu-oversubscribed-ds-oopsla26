@@ -91,3 +91,10 @@ using HTNode = struct HoHStruct {
   uint32_t unique_keys;
   KeyValue *inner_hashtable;
 };
+
+struct DeviceMemReservation {
+  int device_id = -1;
+  size_t total_bytes = 0; // physical memory on the device
+  size_t reserved = 0;    // bytes we actually allocated
+  void *ptr = nullptr;
+};
