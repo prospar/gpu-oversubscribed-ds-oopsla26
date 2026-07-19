@@ -52,3 +52,82 @@ After updating the trace file path or memory reservation the commands(6-8) needs
 
 # For Motivation
 
+
+#########################
+
+# Instructions to reproduce Skip List results
+
+**For skiplist results: all scripts should be run from `gpu-oversubscribed-ds-oopsla26` folder**
+
+#### Required library version:
+- The scripts to reproduce skiplist results use following libraries:
+
+```
+Matplotlib version: 3.9.3
+NumPy version: 2.1.3
+Pandas version: 2.2.3
+```
+
+### Sanity check:
+- Create the directories for storing traces, results, and figure  
+- Verify the installation path and environment variables
+- Add an environment variable in the `.bashrc`, e.g., `export SL_TRACE_ROOT=<path of gpu-oversubscribed-ds-oopsls26 directory>/skiplist_traces`
+
+
+### Motivation Figure (figure 4(c) in the paper)
+
+
+**Warning: Runtime of motivation results with sparse traces extends into hours for insert and search with oversubcription**
+
+_The script runs only monotonic trace in default setting to complete in reasonable time, uncomment line 91 in the `motivation\_study.sh`to collect result for sparse traces_
+
+- Execute the motivation script present in benchmark_scripts 
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/motivation_study.sh
+```
+
+- Parse the log files to generate csv file, generates `motivation_study_skiplist.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_motivation_skiplist_results.py skiplist_results/motivation_study
+```
+- Generating figure 4c of the paper. The file `fig4_c.pdf` will be generated in the `figures_skiplist` folder
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_motivation_plot.py
+```
+
+### Reproduce Table 8 of the paper
+
+- Running experiments
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/keys_per_warp_study.sh
+```
+- Generate a consolidate csv file for traces
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_kpw_results.py skiplist_results/kpw_study
+```
+
+- Output will be stored in the `table8.csv` file in `~/gpu-oversubscribed-ds-oopsla26`
+
+### Reproduce Table 9 of the paper
+
+- Running experiments
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/thread_block_study.sh
+```
+- Generating consolidate csv file for traces
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_thread_block_results.py skiplist_results/thread_block_study
+```
+- Output will be stored in the `table9.csv` file in `~/gpu-oversubscribed-ds-oopsla26`
+
+### Reproduce Table 10 of the paper
+
+- Running the experiments
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/innersl_sensitivity_study.sh
+```
+- Generating the consolidated csv  file for traces
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_innersl_sensitivity_results.py skiplist_results/innersl_sensitivity_study
+```
+- Output will be stored in the `table10.csv` file in `~/gpu-oversubscribed-ds-oopsla26`
