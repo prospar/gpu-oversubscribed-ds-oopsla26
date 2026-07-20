@@ -131,3 +131,20 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_innersl_sensitivity_results.py skiplist_results/innersl_sensitivity_study
 ```
 - Output will be stored in the `table10.csv` file in `~/gpu-oversubscribed-ds-oopsla26`
+
+### Reproduce fig 16 of the paper (Main contribution for skiplist)
+
+- Execute the motivation script present in benchmark_scripts 
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/fig16_script.sh
+```
+
+- Parse the log files to generate csv file, generates `fig16_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig16_results.py skiplist_results/fig16_study
+```
+
+- Generating figure 16 of the paper. The file `fig16.pdf` will be generated in the `figures_skiplist` folder
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig16_plot.py
+```
