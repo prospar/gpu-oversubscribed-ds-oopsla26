@@ -24,6 +24,9 @@ HT_UVM_Path=./gpu/hashtable
 CUCO_Path= ./cuCollections/tests/static_map
 APP_Path=./gpu/applications
 
+SL_Path=./gpu/skiplist
+TRACE_DIR=./tracegen_scripts
+
 STATS_DEBUG=-DKEY_CHECK
 
 UVM_MA_ALL= -DUVM_MEM_ADVISE_SR -DUVM_MEM_ADVISE_SA -DUVM_MEM_ADVISE_SP 
@@ -88,6 +91,63 @@ kmer-htuvm: ${APP_Path}/kmer_counting.cu
 	
 kmer-htovs: ${APP_Path}/kmer_counting_HoH.cu
 	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+
+# trace-gen for skiplist
+trace-gen-25e7: ${TRACE_DIR}/tracegen_skiplist.cpp
+	${CXX} -O3 -std=c++17 ${TRACE_DIR}/tracegen_skiplist.cpp -o ${BIN}/trace-gen-25e7.out -DPRINT_TRACE -DTRACE_STEP=250000000
+
+# for testing of trace-generation
+trace-gen-1e7: ${TRACE_DIR}/tracegen_skiplist.cpp
+	${CXX} -O3 -std=c++17 ${TRACE_DIR}/tracegen_skiplist.cpp -o ${BIN}/trace-gen-1e7.out -DPRINT_TRACE -DTRACE_STEP=100000000
+
+# target for sl-uvm
+sl-uvm-baseline: ${SL_Path}/trace_bm_gfsl_uvm.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DBATCH_IMPL -DUVM_PREFETCH_HINT
+
+sl-uvm-kpw: ${SL_Path}/trace_bm_gfsl_uvm.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DBATCH_IMPL -DUVM_PREFETCH_HINT -DBUSY_WAIT
+
+sl-uvm: ${SL_Path}/trace_bm_gfsl_uvm.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DBATCH_IMPL -DUVM_PREFETCH_HINT -DOPT_GRID -DBUSY_WAIT
+
+
+sl-uvm-sort: ${SL_Path}/trace_bm_gfsl_uvm.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DENABLE_SORT -DBATCH_IMPL -DUVM_PREFETCH_HINT -DENABLE_SORT_INSERT -DOPT_GRID -DBUSY_WAIT
+
+# target for sl-ovs
+sl-ovs-baseline: ${SL_Path}/trace_bm_gfsl_hetero.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DBATCH_IMPL -DUVM_PREFETCH_HINT
+
+sl-ovs: ${SL_Path}/trace_bm_gfsl_hetero.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DBATCH_IMPL -DUVM_PREFETCH_HINT -DBUSY_WAIT -DOPT_GRID
+
+sl-ovs-sort: ${SL_Path}/trace_bm_gfsl_hetero.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DBATCH_IMPL -DENABLE_SORT -DUVM_PREFETCH_HINT -DENABLE_SORT_INSERT -DBUSY_WAIT -DOPT_GRID
+
+#applications
+sluvm_classifier: ${SL_Path}/trace_bm_gfsl_classifier.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out 
+
+slovs_classifier: ${SL_Path}/trace_bm_gfsl_hetero_classifier.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+
+sluvm_kmer: ${SL_Path}/trace_bm_gfsl_kmer.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+
+slovs_kmer: ${SL_Path}/trace_bm_gfsl_hetero_kmer.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out
+
+
+#additional targets for different variant of sl-uvm described in section 4.2.1 of the paper
+
+skiplist-fixedindex-batch-sort: ${SL_Path}/trace_bm_gfsl_uvm.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DFIXED_INDEX -DBATCH_IMPL -DENABLE_SORT -DUVM_PREFETCH_HINT -DENABLE_SORT_INSERT
+# separate pool optimization 
+skiplist-separatepool-busywait-sort: ${SL_Path}/trace_bm_gfsl_uvm.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DSEPARATE_POOL -DBATCH_IMPL -DUVM_PREFETCH_HINT -DBUSY_WAIT -DBUSY_WAIT_SEARCH -DENABLE_SORT -DENABLE_SORT_INSERT
+# unsorted optimization
+skiplist-unsorted-busywait-sort: ${SL_Path}/trace_bm_gfsl_uvm.cu
+	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out -DUNSORTED_IMPL -DBATCH_IMPL -DENABLE_SORT -DUVM_PREFETCH_HINT -DENABLE_SORT_INSERT -DBUSY_WAIT -DBUSY_WAIT_SEARCH
 
 clean:
 	cd ${HH_Path} && rm *.out && cd ../..
