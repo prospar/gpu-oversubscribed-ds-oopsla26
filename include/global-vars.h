@@ -75,3 +75,4 @@ struct iterationTime {
 };
 
 int numGPU = 1;
+size_t AVAIL_MEM = 4ULL * GiB; // keep 4 GiB free

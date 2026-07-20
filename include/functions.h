@@ -322,7 +322,9 @@ void validFlagsDescription() {
        << "trf: search trace file name\n"
        << "kpw: Keys per warp for skiplist\n"
        << "wtw: number of warps participate in waiting\n"
-       << "pss: enable predecessor search in skiplist\n";
+       << "pss: enable predecessor search in skiplist\n"
+       << "ovl: amount of memory to reserve in GB, e.g., 2 for 2GB "
+          "reservation\n";
 }
 
 /** Parse command line flags and initialize the variables */
@@ -388,6 +390,8 @@ int parse_args(char *arg) {
   } else if (s1 == "-pss") { // enable predecessor search
     PREDECESSOR_SEARCH = (bool)val;
     // cout << "Predecessor search set to " << PREDECESSOR_SEARCH << "\n";
+  } else if (s1 == "-ovl") {
+    AVAIL_MEM = val * GiB;
   } else {
     cout << "Unsupported flag:" << s1 << "\n";
     cout << "Use the below list flags:\n";

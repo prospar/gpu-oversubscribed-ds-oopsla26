@@ -41,7 +41,7 @@ uint32_t nonExistingSearchKeysPercent = 0;
 uint32_t tracePtr = 0;
 
 static constexpr uint64_t RANDOM_SEED = 42;
-static const string PROJECT_ROOT_DIR = "SL_TRACE_ROOT";
+static const string SL_TRACE_ROOT = "SL_TRACE_ROOT";
 
 enum TRACE_PATTERN {
   SPARSE_UNIQUE = 0,
@@ -68,7 +68,7 @@ void generateTrace(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t *,
 void create_file(path, uint32_t *, uint64_t);
 
 path getProjectRoot() {
-  string projectRootStr = getenv(PROJECT_ROOT_DIR.c_str());
+  string projectRootStr = getenv(SL_TRACE_ROOT.c_str());
   path projectRootPath = projectRootStr;
   return projectRootPath;
 }

@@ -58,5 +58,4 @@ static const uint32_t EMPTY_UNIQUE_COUNT = 0;
 const uint32_t SL_BATCH_SIZE = 500000000;
 static const string SL_TRACE_ROOT = "SL_TRACE_ROOT";
 
-static constexpr size_t GiB = 1ULL << 30;       // 1 073 741 824 bytes
-static constexpr size_t AVAIL_MEM = 4ULL * GiB; // keep 4 GiB free
+static constexpr size_t GiB = 1ULL << 30; // 1 073 741 824 bytes
