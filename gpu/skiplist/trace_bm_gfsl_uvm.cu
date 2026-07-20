@@ -225,26 +225,24 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
   }
+  cout << "starting benchmark:\n";
 
   size_t free, tot;
   cudaCheckErrorMacro(cudaMemGetInfo(&free, &tot),
                       "Error in getting memory info");
-  if (OVERSUB_RATIO != 0) {
-    std::cerr << "Oversubscription ratio: " << OVERSUB_RATIO << "\n";
-    size_t expected_memory = ((size_t)1) << 34;
-    std::cerr << "Expected memory: " << (expected_memory >> 30) << " GB\n";
-    if (tot < expected_memory) {
-      std::cerr << "Not enough memory available, exiting...\n";
-      return 1;
-    } else {
-      cout << "Total Memory: " << (tot >> 20) << " MB\n";
-      cout << "Free Memory: " << (free >> 20) << " MB\n";
-      size_t mem_diff = tot - expected_memory;
-      std::cerr << "Allocating garbage mem Memory difference: "
-                << (mem_diff >> 20) << " MB\n";
-      char *garbage;
-      cudaCheckErrorMacro(cudaMalloc((void **)&garbage, mem_diff),
-                          "Mem allocation failed for garbage");
+  std::vector<DeviceMemReservation> reservations;
+  if (OVERSUB_RATIO) {
+    reservations = query_and_reserve();
+    cout << "Oversubscription enabled with ratio: " << OVERSUB_RATIO << "\n";
+    printf("\n%-8s  %-8s  %-16s  %-16s\n", "Device", "Total", "Reserved",
+           "Available");
+    printf("%-8s  %-8s  %-16s  %-16s\n", "------", "-----", "--------",
+           "--------");
+    for (const auto &r : reservations) {
+      printf("%-8d  %5.2f GiB  %12.2f GiB  %12.2f GiB\n", r.device_id,
+             static_cast<double>(r.total_bytes) / GiB,
+             static_cast<double>(r.reserved) / GiB,
+             static_cast<double>(r.total_bytes - r.reserved) / GiB);
     }
   }
 
@@ -277,15 +275,15 @@ int main(int argc, char *argv[]) {
   cudaCheckErrorMacro(
       cudaMallocManaged((void **)&keys_values_insert, sizeof(KeyValue) * ADD),
       "Mem allocation failed for keys_values_insert");
-  if (!checkTraceFiles(addTrace, delTrace, findTrace, keys_values_insert,
-                       keys_del, keys_lookup)) {
+  if (!checkTraceFilesSL(addTrace, delTrace, findTrace, keys_values_insert,
+                         keys_del, keys_lookup)) {
     cerr << "[Error] Unable to read trace\n";
   }
 
 // Copy inserted key to temp arr for verification
 #if defined(KEY_CHECK)
   for (uint64_t i = 0; i < ADD; i++) {
-    //keyCheckArr[i] = keys_values_insert[i].key;
+    // keyCheckArr[i] = keys_values_insert[i].key;
   }
 #endif
 
@@ -551,7 +549,8 @@ int main(int argc, char *argv[]) {
       NUM_BLOCKS = (NUM_BLOCKS + KEYS_PER_WARP - 1) / KEYS_PER_WARP;
 #endif
       numWarps = NUM_BLOCKS * (BLOCK_SIZE >> 5);
-      // memcpy(keys_insert_batch, keys_insert + (totalIterations * gpuBatchSize),
+      // memcpy(keys_insert_batch, keys_insert + (totalIterations *
+      // gpuBatchSize),
       //        sizeof(uint32_t) * remainingElements);
       // memcpy(values_insert_batch,
       //        values_insert + (totalIterations * gpuBatchSize),
@@ -714,7 +713,7 @@ int main(int argc, char *argv[]) {
         auto startSortDelete = HRClock::now();
         thrust::sort(thrust::cuda::par(alloc), keys_del_batch,
                      keys_del_batch + gpuBatchSize,
-                     CompareKeysByRangeShift(power_of_two));
+                     CompareByRangeShiftDS(power_of_two));
         auto sortTimeDelete = HRClock::now() - startSortDelete;
         total_sort_time_delete += DurationFloatMS(sortTimeDelete).count();
         std::cout << "Time to sort delete batch: "
@@ -775,7 +774,7 @@ int main(int argc, char *argv[]) {
         auto sortStartDelete = HRClock::now();
         thrust::sort(thrust::cuda::par(alloc), keys_del_batch,
                      keys_del_batch + remainingElements,
-                     CompareKeysByRangeShift(power_of_two));
+                     CompareByRangeShiftDS(power_of_two));
         auto sortTimeDelete = HRClock::now() - sortStartDelete;
         total_sort_time_delete += DurationFloatMS(sortTimeDelete).count();
         std::cout << "Time to sort delete batch: "
@@ -870,9 +869,11 @@ int main(int argc, char *argv[]) {
         //   }
         // }
       }
-      //       std::cerr << "Starting delete correctness check by launching contains..."
+      //       std::cerr << "Starting delete correctness check by launching
+      //       contains..."
       //                 << std::endl;
-      //       batch_contains<<<NUM_BLOCKS, BLOCK_SIZE>>>(numWarps, REM, h_skiplist,
+      //       batch_contains<<<NUM_BLOCKS, BLOCK_SIZE>>>(numWarps, REM,
+      //       h_skiplist,
       //                                                  keys_del, result,
       // #if defined(BUSY_WAIT_SEARCH)
       //                                                  KEYS_PER_WARP,
@@ -881,8 +882,9 @@ int main(int argc, char *argv[]) {
       //       for (int i = 0; i < REM; i++) {
       //         if (result[i] != -1) {
       //           std::cerr << "Something wrong with delete\n";
-      //           std::cerr << "result[" << i << "] is " << result[i] << std::endl;
-      //           std::cerr << "Note: key for deletion was " << keys_del[i]
+      //           std::cerr << "result[" << i << "] is " << result[i] <<
+      //           std::endl; std::cerr << "Note: key for deletion was " <<
+      //           keys_del[i]
       //                     << std::endl;
       //         }
       //       }
@@ -952,7 +954,7 @@ int main(int argc, char *argv[]) {
         auto sortStartSearch = HRClock::now();
         thrust::sort(thrust::device, keys_lookup_batch,
                      keys_lookup_batch + gpuBatchSize,
-                     CompareKeysByRangeShift(power_of_two));
+                     CompareByRangeShiftDS(power_of_two));
         auto sortTimeSearch = HRClock::now() - sortStartSearch;
         total_sort_time_search += DurationFloatMS(sortTimeSearch).count();
         std::cout << "Time to sort search batch: "
@@ -995,7 +997,7 @@ int main(int argc, char *argv[]) {
         auto sortStartSearch = HRClock::now();
         thrust::sort(thrust::device, keys_lookup_batch,
                      keys_lookup_batch + remainingElements,
-                     CompareKeysByRangeShift(power_of_two));
+                     CompareByRangeShiftDS(power_of_two));
         auto sortTimeSearch = HRClock::now() - sortStartSearch;
         total_sort_time_search += DurationFloatMS(sortTimeSearch).count();
         std::cout << "Time to sort search batch: "
@@ -1075,16 +1077,16 @@ int main(int argc, char *argv[]) {
       total_search_time += containsTime;
 #if defined(KEY_CHECK)
       std::cerr << "Checking contains results...\n";
-      //too slow key check for large search queries
-      // for (uint32_t sInd = 0; sInd < FIND; sInd++) {
-      //   for (uint32_t aInd = 0; aInd < ADD; aInd++)
-      //     if (keys_values_insert[aInd].key == keys_lookup[sInd]) {
-      //       if (result[sInd] != 0)
-      //         assert(result[sInd] == keys_values_insert[aInd].value);
-      //       break;
-      //     }
-      // }
-      // free(cons_vals);
+      // too slow key check for large search queries
+      //  for (uint32_t sInd = 0; sInd < FIND; sInd++) {
+      //    for (uint32_t aInd = 0; aInd < ADD; aInd++)
+      //      if (keys_values_insert[aInd].key == keys_lookup[sInd]) {
+      //        if (result[sInd] != 0)
+      //          assert(result[sInd] == keys_values_insert[aInd].value);
+      //        break;
+      //      }
+      //  }
+      //  free(cons_vals);
 #endif
       cudaCheckErrorMacro(cudaFree(result),
                           "Mem free failed for result after contains");
@@ -1132,7 +1134,7 @@ int main(int argc, char *argv[]) {
         auto sortStartSearch = HRClock::now();
         thrust::sort(thrust::device, keys_lookup_batch,
                      keys_lookup_batch + gpuBatchSize,
-                     CompareKeysByRangeShift(power_of_two));
+                     CompareByRangeShiftDS(power_of_two));
         auto sortTimeSearch = HRClock::now() - sortStartSearch;
         total_sort_time_predecessor += DurationFloatMS(sortTimeSearch).count();
         std::cout << "Time to sort search batch: "
@@ -1176,7 +1178,7 @@ int main(int argc, char *argv[]) {
         auto sortStartSearch = HRClock::now();
         thrust::sort(thrust::device, keys_lookup_batch,
                      keys_lookup_batch + remainingElements,
-                     CompareKeysByRangeShift(power_of_two));
+                     CompareByRangeShiftDS(power_of_two));
         auto sortTimeSearch = HRClock::now() - sortStartSearch;
         total_sort_time_predecessor += DurationFloatMS(sortTimeSearch).count();
         std::cout << "Time to sort search batch: "
@@ -1372,15 +1374,12 @@ int main(int argc, char *argv[]) {
             << std::endl;
   std::cerr << "Median Sort Time: " << median.total_sort_time << " ms"
             << std::endl;
-  // #ifndef FIXED_INDEX
-  //   GFSL host_gfsl;
-  //   cudaCheckErrorMacro(cudaMemcpy(&host_gfsl, h_skiplist /*d_skiplist.get()*/,
-  //                                  sizeof(GFSL), cudaMemcpyDeviceToHost),
-  //                       "Mem copy failed for host_gfsl");
-  //   // std::cerr << "Num Chunks Allocated: " << host_gfsl.num_allocated << "\n";
-  // #endif
 
   // info to identify successfull experiment
   std::cout << "[info] Experiment completed successfully\n";
+
+  if (OVERSUB_RATIO)
+    release_reservations(reservations);
+
   return 0;
 }
