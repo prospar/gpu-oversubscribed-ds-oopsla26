@@ -98,7 +98,7 @@ trace-gen-25e7: ${TRACE_DIR}/tracegen_skiplist.cpp
 
 # for testing of trace-generation
 trace-gen-1e7: ${TRACE_DIR}/tracegen_skiplist.cpp
-	${CXX} -O3 -std=c++17 ${TRACE_DIR}/tracegen_skiplist.cpp -o ${BIN}/trace-gen-1e7.out -DPRINT_TRACE -DTRACE_STEP=100000000
+	${CXX} -O3 -std=c++17 ${TRACE_DIR}/tracegen_skiplist.cpp -o ${BIN}/trace-gen-1e7.out -DPRINT_TRACE -DTRACE_STEP=10000000
 
 # target for sl-uvm
 sl-uvm-baseline: ${SL_Path}/trace_bm_gfsl_uvm.cu
