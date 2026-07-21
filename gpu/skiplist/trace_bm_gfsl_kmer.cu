@@ -1,4 +1,5 @@
-// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70 trace_bd_gfsl_kmer.cu -o kmer_count_driver -I../../include
+// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70
+// trace_bd_gfsl_kmer.cu -o kmer_count_driver -I../../include
 #include "constants.h"
 #include "datatypes.h"
 #include "functions.h"
@@ -140,17 +141,37 @@ int main(int argc, char **argv) {
     }
   }
 
-  uint64_t *dummy_array = nullptr;
-  constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
-  // reserve 1.6-50% 4-75% 5.6-100%
-  uint64_t reserve_bytes = static_cast<uint64_t>(1 * double(GiB)); // change 2 to desired size
-  size_t num_elements = reserve_bytes / sizeof(uint64_t);
-  cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),num_elements * sizeof(uint64_t));
-  if (err != cudaSuccess) {
-    std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl;
-    return 1;
-  } else {
-    std::cout << "Successfully reserved ~ GiB of GPU memory (" << num_elements<< " uint64_t elements)." << std::endl;
+  // uint64_t *dummy_array = nullptr;
+  // constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
+  // // reserve 1.6-50% 4-75% 5.6-100%
+  // uint64_t reserve_bytes =
+  //     static_cast<uint64_t>(AVAIL_MEM); // change 2 to desired size
+  // size_t num_elements = reserve_bytes / sizeof(uint64_t);
+  // cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
+  //                              num_elements * sizeof(uint64_t));
+  // if (err != cudaSuccess) {
+  //   std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) <<
+  //   std::endl; return 1;
+  // } else {
+  //   std::cout << "Successfully reserved ~ GiB of GPU memory (" <<
+  //   num_elements
+  //             << " uint64_t elements)." << std::endl;
+  // }
+
+  std::vector<DeviceMemReservation> reservations;
+  if (OVERSUB_RATIO) {
+    reservations = query_and_reserve();
+    cout << "Oversubscription enabled with ratio: " << OVERSUB_RATIO << "\n";
+    printf("\n%-8s  %-8s  %-16s  %-16s\n", "Device", "Total", "Reserved",
+           "Available");
+    printf("%-8s  %-8s  %-16s  %-16s\n", "------", "-----", "--------",
+           "--------");
+    for (const auto &r : reservations) {
+      printf("%-8d  %5.2f GiB  %12.2f GiB  %12.2f GiB\n", r.device_id,
+             static_cast<double>(r.total_bytes) / GiB,
+             static_cast<double>(r.reserved) / GiB,
+             static_cast<double>(r.total_bytes - r.reserved) / GiB);
+    }
   }
 
   // Load genome (host ASCII)
@@ -169,7 +190,7 @@ int main(int argc, char **argv) {
   float total_sort_time_insert = 0.0f;
   power_of_two = rangeSize;
 
-  uint8_t *genome = new uint8_t[genome_len]; //encoded genome
+  uint8_t *genome = new uint8_t[genome_len]; // encoded genome
   for (size_t i = 0; i < genome_len; i++)
     genome[i] = encode_base(genome_str[i]);
   cout << "Encoded genome loaded.\n";
@@ -180,7 +201,7 @@ int main(int argc, char **argv) {
     d_kmer_keys[i] = build_kmer_key_host(genome, i);
     helper_arr[i] = d_kmer_keys[i];
   }
-  delete[]genome;
+  delete[] genome;
   cout << "K-mer keys built.\n";
 
   GFSL *h_skiplist;
@@ -270,7 +291,6 @@ int main(int argc, char **argv) {
     }
 #endif
 
-
     float ms;
     cudaEventElapsedTime(&ms, start, stop);
     cout << "Inserted batch of " << per_batch_gpu_ins << " k-mers in " << ms
@@ -295,13 +315,16 @@ int main(int argc, char **argv) {
   // std::cout << "Unique k-mers inserted: " << count
   //           << "\tUnqiue k-mers in hashtable " << unique << "\n";
 
-  delete[] (d_kmer_keys);
-  delete[] (helper_arr);
+  delete[](d_kmer_keys);
+  delete[](helper_arr);
   cudaFree(d_uvm_batch);
   cudaFree(result);
   cudaFree(h_skiplist->memory_pool);
   cudaFree(h_skiplist);
   cudaFree(stats);
 
+  if (OVERSUB_RATIO) {
+    release_reservations(reservations);
+  }
   return 0;
 }

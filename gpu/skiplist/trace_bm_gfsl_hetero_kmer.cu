@@ -1,4 +1,6 @@
-// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70 trace_bm_gfsl_hetero_kmer.cu -o hetero_kmer_count_driver -I../../include -DUVM_PREFETCH_HINT
+// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70
+// trace_bm_gfsl_hetero_kmer.cu -o hetero_kmer_count_driver -I../../include
+// -DUVM_PREFETCH_HINT
 #include "constants.h"
 #include "datatypes.h"
 #include "functions.h"
@@ -160,25 +162,43 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  uint64_t *dummy_array = nullptr;
-  constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
-  // reserve 1.6-50% 4-75% 5.6-100%
-  uint64_t reserve_bytes =
-      static_cast<uint64_t>(1 * double(GiB)); // change 2 to desired size
-  size_t num_elements = reserve_bytes / sizeof(uint64_t);
-  cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
-                               num_elements * sizeof(uint64_t));
-  if (err != cudaSuccess) {
-    std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl;
-    return 1;
-  } else {
-    std::cout << "Successfully reserved ~ GiB of GPU memory (" << num_elements
-              << " uint64_t elements)." << std::endl;
+  // uint64_t *dummy_array = nullptr;
+  // // constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
+  // // reserve 1.6-50% 4-75% 5.6-100%
+  // uint64_t reserve_bytes =
+  //     static_cast<uint64_t>(AVAIL_MEM); // change 2 to desired size
+  // size_t num_elements = reserve_bytes / sizeof(uint64_t);
+  // cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
+  //                              num_elements * sizeof(uint64_t));
+  // if (err != cudaSuccess) {
+  //   std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) <<
+  //   std::endl; return 1;
+  // } else {
+  //   std::cout << "Successfully reserved ~ GiB of GPU memory (" <<
+  //   num_elements
+  //             << " uint64_t elements)." << std::endl;
+  // }
+
+  std::vector<DeviceMemReservation> reservations;
+  if (OVERSUB_RATIO) {
+    reservations = query_and_reserve();
+    cout << "Oversubscription enabled with ratio: " << OVERSUB_RATIO << "\n";
+    printf("\n%-8s  %-8s  %-16s  %-16s\n", "Device", "Total", "Reserved",
+           "Available");
+    printf("%-8s  %-8s  %-16s  %-16s\n", "------", "-----", "--------",
+           "--------");
+    for (const auto &r : reservations) {
+      printf("%-8d  %5.2f GiB  %12.2f GiB  %12.2f GiB\n", r.device_id,
+             static_cast<double>(r.total_bytes) / GiB,
+             static_cast<double>(r.reserved) / GiB,
+             static_cast<double>(r.total_bytes - r.reserved) / GiB);
+    }
   }
 
+  // data/heterods-trace
   // Load genome (host ASCII)
   std::string genome_str =
-      load_fasta("/data/heterods-trace/GCF_000001635.27_GRCm39_genomic.fna");
+      load_fasta("skiplist_traces/GCF_000001635.27_GRCm39_genomic.fna");
   size_t genome_len = genome_str.size();
   size_t num_kmers = genome_len - K + 1;
 
@@ -239,7 +259,7 @@ int main(int argc, char *argv[]) {
   uint32_t gpu_batch = 250000000;
   power_of_two = rangeSize;
 
-  uint8_t *genome = new uint8_t[genome_len]; //encoded genome
+  uint8_t *genome = new uint8_t[genome_len]; // encoded genome
   for (size_t i = 0; i < genome_len; i++)
     genome[i] = encode_base(genome_str[i]);
   cout << "Encoded genome loaded.\n";
@@ -289,7 +309,7 @@ int main(int argc, char *argv[]) {
     // auto sortTimeInsert = HRClock::now() - startSort;
     // total_sort_time_insert += DurationFloatMS(sortTimeInsert).count();
 
-    NUM_BLOCKS = (gpu_batch + BLOCK_SIZE - 1) >> 4;
+    NUM_BLOCKS = (gpu_batch + 15) >> 4;
     cudaEventRecord(start);
     batch_insert<<<NUM_BLOCKS, BLOCK_SIZE>>>(
         NUM_BLOCKS * (BLOCK_SIZE >> 5), gpuBatchSize, heteroSkiplist,
@@ -336,5 +356,8 @@ int main(int argc, char *argv[]) {
   delete[](helper_arr);
   cudaFree(d_uvm_batch);
   cudaFree(result);
+  if (OVERSUB_RATIO) {
+    release_reservations(reservations);
+  }
   return 0;
 }

@@ -1,5 +1,6 @@
-// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70 trace_bm_gfsl_hetero_classifier.cu -o hetero_classifier_driver -I../../include
-// -rns=21
+// compilation command: nvcc -O3 -use_fast_math -lineinfo -std=c++17 -arch=sm_70
+// trace_bm_gfsl_hetero_classifier.cu -o hetero_classifier_driver
+// -I../../include -rns=21
 #include "constants.h"
 #include "datatypes.h"
 #include "functions.h"
@@ -36,10 +37,37 @@ using DurationFloatMS = std::chrono::duration<float, std::milli>;
 __global__ void batch_insert(uint64_t numWarps, uint64_t len,
                              SparseGFSL *sparseSL, KeyValue *keyValList,
                              uint32_t *resList, uint32_t perSLRange,
-                             GFSLRange *rangeGFSL, SkiplistStats *stats) {
+                             GFSLRange *rangeGFSL,
+                             //  int keysPerWarp,
+                             SkiplistStats *stats) {
   size_t tid = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   size_t warpId = tid >> 5;
-
+  /*
+  for (uint64_t i = (keysPerWarp * warpId); i < len;
+         i += (keysPerWarp * numWarps)) {
+    int j = 0;
+    for (; j < keysPerWarp; j++) {
+      if (i + j < len) {
+        // use bit shit to compute range
+        int slot = keyValList[i + j].key >> perSLRange;
+        atomicExch(&(sparseSL[slot].range),
+                   slot + 1); // update the denoted range
+        if (sparseSL[slot].range)
+          rangeGFSL->insert((uint32_t)slot, 1, stats);
+        resList[i + j] = sparseSL[slot].innerGFSL->insert(
+            keyValList[i + j].key, keyValList[i + j].value, stats);
+        if (resList[i + j]) {
+          if (sparseSL[slot].minKey > keyValList[i + j].key) {
+            atomicMin(&(sparseSL[slot].minKey), keyValList[i + j].key);
+          }
+          if (sparseSL[slot].maxKey < keyValList[i + j].key) {
+            atomicMax(&(sparseSL[slot].maxKey), keyValList[i + j].key);
+          }
+        }
+      }
+    }
+  }
+  */
   for (uint64_t i = warpId; i < len; i += numWarps) {
     int slot = keyValList[i].key >> perSLRange;
     atomicExch(&(sparseSL[slot].range), slot + 1);
@@ -179,20 +207,37 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  uint64_t *dummy_array = nullptr;
-  constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
-  // reserve 1.6-50% 4-75% 5.6-100%
-  uint64_t reserve_bytes =
-      static_cast<uint64_t>(1 * double(GiB)); // change 2 to desired size
-  size_t num_elements = reserve_bytes / sizeof(uint64_t);
-  cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
-                               num_elements * sizeof(uint64_t));
-  if (err != cudaSuccess) {
-    std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl;
-    return 1;
-  } else {
-    std::cout << "Successfully reserved ~ GiB of GPU memory (" << num_elements
-              << " uint64_t elements)." << std::endl;
+  // uint64_t *dummy_array = nullptr;
+  // constexpr uint64_t GiB = 1024ULL * 1024 * 1024;
+  // // reserve 1.6-50% 4-75% 5.6-100%
+  // uint64_t reserve_bytes =
+  //     static_cast<uint64_t>(5 * double(GiB)); // change 2 to desired size
+  // size_t num_elements = reserve_bytes / sizeof(uint64_t);
+  // cudaError_t err = cudaMalloc(reinterpret_cast<void **>(&dummy_array),
+  //                              num_elements * sizeof(uint64_t));
+  // if (err != cudaSuccess) {
+  //   std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) <<
+  //   std::endl; return 1;
+  // } else {
+  //   std::cout << "Successfully reserved ~ GiB of GPU memory (" <<
+  //   num_elements
+  //             << " uint64_t elements)." << std::endl;
+  // }
+
+  std::vector<DeviceMemReservation> reservations;
+  if (OVERSUB_RATIO) {
+    reservations = query_and_reserve();
+    cout << "Oversubscription enabled with ratio: " << OVERSUB_RATIO << "\n";
+    printf("\n%-8s  %-8s  %-16s  %-16s\n", "Device", "Total", "Reserved",
+           "Available");
+    printf("%-8s  %-8s  %-16s  %-16s\n", "------", "-----", "--------",
+           "--------");
+    for (const auto &r : reservations) {
+      printf("%-8d  %5.2f GiB  %12.2f GiB  %12.2f GiB\n", r.device_id,
+             static_cast<double>(r.total_bytes) / GiB,
+             static_cast<double>(r.reserved) / GiB,
+             static_cast<double>(r.total_bytes - r.reserved) / GiB);
+    }
   }
 
   // Load genome (host ASCII)
@@ -255,7 +300,7 @@ int main(int argc, char *argv[]) {
   size_t cpu_counter = 0;
   uint32_t gpu_batch = 250000000;
 
-  uint8_t *genome = new uint8_t[genome_len]; //encoded genome
+  uint8_t *genome = new uint8_t[genome_len]; // encoded genome
   for (size_t i = 0; i < genome_len; i++)
     genome[i] = encode_base(genome_str[i]);
 
@@ -306,7 +351,7 @@ int main(int argc, char *argv[]) {
     auto sortTimeInsert = HRClock::now() - startSort;
     total_sort_time_insert += DurationFloatMS(sortTimeInsert).count();
 
-    NUM_BLOCKS = (gpu_batch + BLOCK_SIZE - 1) >> 4;
+    NUM_BLOCKS = 16384; //(gpu_batch + BLOCK_SIZE - 1) >> 4;
     cudaEventRecord(start);
     batch_insert<<<NUM_BLOCKS, BLOCK_SIZE>>>(
         NUM_BLOCKS * (BLOCK_SIZE >> 5), gpuBatchSize, heteroSkiplist,
@@ -387,9 +432,10 @@ int main(int argc, char *argv[]) {
     auto startSort = HRClock::now();
     thrust::sort(thrust::cuda::par(alloc), search_keys,
                  search_keys + per_batch_gpu_find,
-                 CompareKeysByRangeShift(power_of_two));
+                 CompareByRangeShiftDS(power_of_two));
     auto sortTimeInsert = HRClock::now() - startSort;
     total_sort_time_search += DurationFloatMS(sortTimeInsert).count();
+    NUM_BLOCKS = (gpu_batch + 15) >> 4;
 
     cudaEventRecord(start);
     batch_contains<<<NUM_BLOCKS, BLOCK_SIZE>>>(
@@ -425,17 +471,21 @@ int main(int argc, char *argv[]) {
 
   // printSparseGFSL(heteroSkiplist, outerSlots); // implement
   freeSGFSL(heteroSkiplist, outerSlots); // replace by outerslots later
-  cudaCheckErrorMacro(cudaFree(heteroSkiplist),
-                      "Mem free failed for heteroSkiplist");
-  cudaCheckErrorMacro(cudaFree(rangeSkiplist),
-                      "Mem free failed for rangeSkiplist");
+  // cudaCheckErrorMacro(cudaFree(heteroSkiplist),
+  // "Mem free failed for heteroSkiplist");
+  // cudaCheckErrorMacro(cudaFree(rangeSkiplist),
+  // "Mem free failed for rangeSkiplist");
 
   std::cout << "[info] Experiment completed successfully\n";
   delete[] d_kmer_keys;
-  cudaFree(d_uvm_batch);
-  cudaFree(result);
+  // cudaFree(d_uvm_batch);
+  // cudaFree(result);
   cudaFree(stats);
   cudaFree(search_keys);
   cudaFree(search_values);
+
+  if (OVERSUB_RATIO)
+    release_reservations(reservations);
+
   return 0;
 }

@@ -816,7 +816,8 @@ std::vector<DeviceMemReservation> query_and_reserve() {
     // Occupy (total - 4 GiB).
     // If current free memory is less than that (other processes already
     // hold some), we clamp to avoid over-allocating.
-    const size_t desired = total_bytes - AVAIL_MEM;
+    // const size_t desired = total_bytes - AVAIL_MEM;
+    const size_t desired = AVAIL_MEM;
     const size_t to_alloc = (free_bytes >= desired)  ? desired
                             : free_bytes > AVAIL_MEM ? free_bytes - AVAIL_MEM
                                                      : 0;

@@ -1,2 +1,5 @@
-./bin/*
-./skiplist_traces/*
+bin/*
+skiplist_traces/*
+*.csv
+figures_skiplist/*.pdf
+skiplist_results/*
