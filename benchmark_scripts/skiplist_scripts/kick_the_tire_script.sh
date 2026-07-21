@@ -91,11 +91,11 @@ do
     div_factor=2
     oper=$((size / div_factor))
 
-    $BIN_DIR/sl-uvm-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-25e7-800e7-50-add-0-rem-50-find-no-dup-DENSE_UNIQUE.bin" -trf="search_trace-25e7-800e7-50-add-0-rem-50-find-no-dup-no-absent-DENSE_UNIQUE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=300 -wtw=1 > $skiplist_results_dir/$expr_dir/sl-uvm-sort/$size/DenseUnique/output.log 2>&1
-    $BIN_DIR/sl-uvm-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-25e7-400e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trf="insert_trace-25e7-400e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=300 -wtw=1 > $skiplist_results_dir/$expr_dir/sl-uvm-sort/$size/MonotonicIncrease/output.log 2>&1
-    $BIN_DIR/sl-ovs-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-25e7-800e7-50-add-0-rem-50-find-no-dup-DENSE_UNIQUE.bin" -trf="search_trace-25e7-800e7-50-add-0-rem-50-find-no-dup-no-absent-DENSE_UNIQUE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=180 -wtw=1 -rng=21 > $skiplist_results_dir/$expr_dir/sl-ovs-sort/$size/DenseUnique/output.log 2>&1
-    $BIN_DIR/sl-ovs-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-25e7-400e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trf="insert_trace-25e7-400e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=180 -wtw=1 -rng=21 > $skiplist_results_dir/$expr_dir/sl-ovs-sort/$size/MonotonicIncrease/output.log 2>&1
-        
+    $BIN_DIR/sl-uvm-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-1e7-10e7-50-add-0-rem-50-find-no-dup-DENSE_UNIQUE.bin" -trf="search_trace-1e7-10e7-50-add-0-rem-50-find-no-dup-no-absent-DENSE_UNIQUE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=300 -wtw=1 > $skiplist_results_dir/$expr_dir/sl-uvm-sort/$size/DenseUnique/output.log 2>&1
+    $BIN_DIR/sl-uvm-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-1e7-5e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trf="insert_trace-1e7-5e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=300 -wtw=1 > $skiplist_results_dir/$expr_dir/sl-uvm-sort/$size/MonotonicIncrease/output.log 2>&1
+    $BIN_DIR/sl-ovs-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-1e7-10e7-50-add-0-rem-50-find-no-dup-DENSE_UNIQUE.bin" -trf="search_trace-1e7-10e7-50-add-0-rem-50-find-no-dup-no-absent-DENSE_UNIQUE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=180 -wtw=1 -rng=21 > $skiplist_results_dir/$expr_dir/sl-ovs-sort/$size/DenseUnique/output.log 2>&1
+    $BIN_DIR/sl-ovs-sort.out -ops=$size -add=$oper -rem=0 -tra="insert_trace-1e7-5e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trf="insert_trace-1e7-5e7-100-add-0-rem-0-find-no-dup-MONOTONIC_INCREASE.bin" -trr="" -blk=16384 -siz=512 -rns=1 -gbs=250000000 -kpw=180 -wtw=1 -rng=21 > $skiplist_results_dir/$expr_dir/sl-ovs-sort/$size/MonotonicIncrease/output.log 2>&1
+
     echo "Experiments completed for input set $size"
     
 done
