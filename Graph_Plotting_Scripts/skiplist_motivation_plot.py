@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-csv_file = "motivation_study_skiplist.csv"
+csv_file = "figures_skiplist/motivation_study_skiplist.csv"
 
 df = pd.read_csv(csv_file)
 print(df)

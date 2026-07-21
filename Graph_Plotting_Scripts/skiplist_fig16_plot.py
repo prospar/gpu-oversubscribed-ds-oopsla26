@@ -8,7 +8,7 @@ def geometric_mean(values):
     return np.exp(np.mean(np.log(values)))
 
 # Read CSV
-df = pd.read_csv("fig16_study.csv")
+df = pd.read_csv("figures_skiplist/fig16_study.csv")
 
 # Create a flat table
 pivot = df.pivot(
