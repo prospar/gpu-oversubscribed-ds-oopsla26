@@ -3,7 +3,7 @@ echo "Current directory $PWD"
 CURRENT_DIR=$PWD
 BIN_DIR="$CURRENT_DIR/bin"
 skiplist_results_dir="$CURRENT_DIR/skiplist_results"
-expr_dir="kick_the_tier"
+expr_dir="kick_the_tire"
 
 mkdir -p "$CURRENT_DIR/skiplist_traces"
 
@@ -53,7 +53,7 @@ fi
 ####### LAUNCH EXP #####################
 runs=1
 
-echo "Launching experiments for kick-the-tier: $expr_dir runs: $runs"
+echo "Launching experiments for kick-the-tire: $expr_dir runs: $runs"
 
 trace_type=( "MonotonicIncrease" "DenseUnique" )
 
@@ -99,11 +99,11 @@ do
     echo "Experiments completed for input set $size"
     
 done
-echo "Completed the kick-the-tier experiments of skiplist"
+echo "Completed the kick-the-tire experiments of skiplist"
 
 
 ######### PARSE RESULT #############
-python3 benchmarks_scripts/skiplist_scripts/parse_fig16_results.py $skiplist_results_dir/$expr_dir
+python3 benchmark_scripts/skiplist_scripts/parse_ktt_results.py $skiplist_results_dir/$expr_dir
 
 ######### PLOT BAR CHART ##########
 
