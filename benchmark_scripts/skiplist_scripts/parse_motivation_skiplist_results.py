@@ -128,7 +128,7 @@ def write_csv(results, outfile="parsed_results.csv"):
         "Search Time"
     ]
 
-    with open(outfile, "w", newline="", encoding="utf-8") as f:
+    with open(f'figures_skiplist/{outfile}', "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(results)

@@ -129,7 +129,7 @@ def write_csv(results, outfile="parsed_results_table9.csv"):
         '4194304'
     ]
 
-    with open(outfile, "w", newline="", encoding="utf-8") as f:
+    with open(f'figures_skiplist/{outfile}', "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(results)

@@ -25,65 +25,30 @@ from pathlib import Path
 def is_log_file(filename):
     return filename.lower().endswith((".log", ".txt", ".out", ".err"))
 
-def extract_trace_type(filepath):
-    """
-    Extract trace type from the file path.
-
-    MonotonicIncrease -> MI
-    SparseUnique      -> SU
-    DenseUnique       -> DU
-    """
-    path = filepath.lower()
-
-    if "monotonicincrease" in path:
-        return "MI"
-    elif "sparseunique" in path:
-        return "SU"
-    elif "denseunique" in path:
-        return "DU"
-    else:
-        return "Unknown"
 
 def extract_impl(filepath):
     """
     Extract implementation name from
 
-    .../fig16_study/<implementation>/<input_size>/<trace>/...
+    .../applications_study/<implementation>/...
     """
 
     parts = Path(filepath).parts
 
     for i, part in enumerate(parts):
-        if part == "fig16_study":
+        if part == "applications_study":
             if i + 1 < len(parts):
                 return parts[i + 1]
-
-    return "Unknown"
-
-def extract_input_size(filepath):
-    """
-    Try to extract input size from filename or nearby lines.
-    Modify the regex to match your log format.
-    """
-
-    filename = os.path.basename(filepath)
-
-    parts = Path(filepath).parts
-
-    for i, part in enumerate(parts):
-        if part in ("SparseUnique", "MonotonicIncrease", "DenseUnique"):
-            if i > 0 and parts[i - 1].isdigit():
-                return parts[i - 1]
 
     return "Unknown"
 
 
 def extract_output_number(filepath):
     """
-    output-128.log -> 128
+    output_ovr10.log -> 10
     """
     filename = os.path.basename(filepath)
-    m = re.search(r"output-blk(\d+)", filename)
+    m = re.search(r"output_ovr(\d+)", filename)
     if m:
         return m.group(1)
     return "Unknown"
@@ -93,29 +58,29 @@ def parse_file(filepath, results):
     try:
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
-        
-        trace_type = extract_trace_type(filepath)
-        input_size = extract_input_size(filepath)
-        impl_name = extract_impl(filepath)
-        
-        record = {
-            "Impl" : impl_name,
-            "Input Size": int(input_size)//2,
-            "Trace Type": trace_type,
-            "Insert Time": "",
-            "Search Time": ""
-        }
 
-        for i, line in enumerate(lines):
-            operation:str=""
-            if "Median Insert Time: " in line:
-                m = re.search(r"Median Insert Time:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
-                if m:
-                    record["Insert Time"] = round(float(m.group(1))/1000,2) # converting to secs
-            if "Median Search Time: " in line:
-                m = re.search(r"Median Search Time:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
-                if m:
-                    record["Search Time"] = round(float(m.group(1))/1000,2) # converting to secs
+        input_size = extract_output_number(filepath)
+        impl_name = extract_impl(filepath)
+
+        if "classifier" in impl_name:
+            record = {
+                "Impl" : impl_name,
+                "Input Size": input_size,
+                "Insert Time": "",
+                "Search Time": ""
+            }
+
+            for i, line in enumerate(lines):
+                operation:str=""
+                if "Total build time (GPU): " in line:
+                    m = re.search(r"Total build time \(GPU\): \s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
+                    if m:
+                        record["Insert Time"] = round(float(m.group(1))/1000,2) # converting to secs
+
+                if "Total search time (GPU): " in line:
+                    m = re.search(r"Total search time \(GPU\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
+                    if m:
+                        record["Search Time"] = round(float(m.group(1))/1000,2) # converting to secs
             results[filepath] = record
 
     except Exception as e:
@@ -134,12 +99,11 @@ def walk_directory(root_dir):
     return list(results.values())
 
 
-def write_csv(results, outfile="parsed_results.csv"):
+def write_csv(results, outfile="fig_17_study.csv"):
 
     fields = [
         "Impl",
         "Input Size",
-        "Trace Type",
         "Insert Time",
         "Search Time"
     ]
@@ -158,7 +122,7 @@ if __name__ == "__main__":
         print("Usage: python parse_fig16_results.py <root_directory>")
         sys.exit(1)
 
-    csv_name_str = "fig16_study.csv"
+    csv_name_str = "fig_17_study.csv"
 
     print(f'{csv_name_str}')
     root = sys.argv[1]
