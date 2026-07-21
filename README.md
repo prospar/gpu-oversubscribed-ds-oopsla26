@@ -69,10 +69,26 @@ Pandas version: 2.2.3
 ```
 
 ### Sanity check:
-- Create the directories for storing traces, results, and figure  
-- Verify the installation path and environment variables
+- Run the validation script to create directory structures
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/validation_script.sh
+```
 - Add an environment variable in the `.bashrc`, e.g., `export SL_TRACE_ROOT=<path of gpu-oversubscribed-ds-oopsls26 directory>/skiplist_traces`
 
+### Kick-the-tire:
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/kick_the_tire_script.sh
+```
+
+### Generating the synthetic traces for full set of experiments:
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash tracegen_scripts/trace_script_skiplist.sh
+```
+
+### Downloading the traces for real-world application
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash tracegen_scripts/application_traces.sh
+```
 
 ### Motivation Figure (figure 4(c) in the paper)
 
