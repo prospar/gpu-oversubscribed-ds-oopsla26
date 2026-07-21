@@ -7,6 +7,17 @@ def geometric_mean(values):
     values = np.asarray(values, dtype=float)
     return np.exp(np.mean(np.log(values)))
 
+label_map = {
+    1250000000: "0",
+    1500000000: "20",
+    1750000000: "40",
+    2000000000: "60",
+    2250000000: "80",
+    2500000000: "100",
+    "GeoMean": "GeoMean"
+}
+
+
 # Read CSV
 df = pd.read_csv("figures_skiplist/fig16_study.csv")
 
@@ -45,8 +56,6 @@ numeric_sizes = np.sort(speedup["Input Size"].unique())
 trace_types = ["SU", "MI", "DU"]
 input_sizes = sorted(speedup["Input Size"].unique())
 
-# input_sizes.append("Geomean")
-
 geo_rows = []
 for trace in trace_types:
 
@@ -64,13 +73,16 @@ print(geo)
 
 bar_width = 0.25
 
-x_labels=[f"{s/1e9:.2f}" for s in numeric_sizes]
+x_labels=[f"{s}" for s in numeric_sizes]
 x_labels.append("Geomean")
 
 x = np.arange(len(x_labels))
 
 
-fig, axes = plt.subplots(2, 1, figsize=(7, 10), sharex=True)
+# fig, axes = plt.subplots(2, 1, figsize=(7, 10), sharex=True)
+fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharex=True)
+labels = [label_map[s] for s in input_sizes]
+labels.append("GeoMean")
 
 for ax, metric, title in zip(
         axes,
@@ -112,15 +124,27 @@ for ax, metric, title in zip(
             ax.text(xx, yy + 0.01, f"{yy:.2f}",
                     ha="center", fontsize=8)
 
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_xlabel("Oversubscription Level(in %)")
     ax.axhline(1.0, color="black", linestyle="--")
-    ax.set_ylabel("Speedup")
-    ax.set_title(title)
-    ax.grid(axis="y", alpha=0.3)
-    ax.legend(title="Trace Type")
 
-axes[1].set_xticks(x)
-axes[1].set_xticklabels(x_labels)
-axes[1].set_xlabel("Input Size(x10^9)")
+axes[0].set_ylabel("Speedup")
+axes[0].set_title("Insert Speedup")
+axes[1].set_title("Search Speedup")
+# ax.grid(axis="y", alpha=0.3)
+handles, labels = axes[0].get_legend_handles_labels()
+
+fig.legend(
+    handles,
+    labels,
+    loc="upper center",
+    ncol=3,
+    frameon=False,
+    bbox_to_anchor=(0.5, 1.05)
+)
+
+
 
 plt.tight_layout()
 plt.savefig("figures_skiplist/fig16.pdf", dpi=300)
