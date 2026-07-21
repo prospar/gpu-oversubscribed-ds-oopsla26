@@ -148,3 +148,44 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig16_plot.py
 ```
+
+### Downloading data set for the metagenomic and K-mer applications
+
+```bash
+
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/635/GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_genomic.fna.gz
+gunzip -c GCF_000001635.27_GRCm39_genomic.fna.gz > skiplist_traces/GCF_000001635.27_GRCm39_genomic.fna
+
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/285/GCF_000002285.3_CanFam3.1/GCF_000002285.3_CanFam3.1_genomic.fna.gz
+gunzip -c GCF_000002285.3_CanFam3.1_genomic.fna.gz > skiplist_traces/GCF_000002285.3_CanFam3.1_genomic.fna
+
+```
+
+**NOTE: Fig 6b and 17 for skiplist uses the same real-world application**
+
+- Execute the applicatons study script present in benchmark_scripts. Generate the data both for fig 6b and 17.
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/applications_study.sh
+```
+
+### Scalability study of Metageonomic application(Fig 6b of the paper)
+
+- Parse the log files to generate csv file, generates `fig_6b_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
+```
+- Generating figure 6b of the paper. The file `fig_6b.pdf` will be generated in the `figures_skiplist` folder
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig6b_plot.py
+```
+
+### Study of real-world applications(Fig 17 (RHS) of the paper)
+
+- Parse the log files to generate csv file, generates `fig_17_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
+```
+- Generating figure 17 (RHS) of the paper. The file `fig_17.pdf` will be generated in the `figures_skiplist` folder
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig17_plot.py
+```
