@@ -212,7 +212,7 @@ python3 Graph_Plotting_Scripts/skiplist_fig6b_plot.py
 
 - Parse the log files to generate csv file, generates `fig_17_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
-python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
+python3 benchmark_scripts/skiplist_scripts/parse_applications_results.py skiplist_results/applications_study
 ```
 
 - Generating figure 17 (RHS) of the paper. The file `fig_17.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` directory
