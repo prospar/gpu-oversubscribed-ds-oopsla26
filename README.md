@@ -59,9 +59,26 @@ After updating the trace file path or memory reservation the commands(6-8) needs
 
 **For skiplist results: all scripts should be run from `gpu-oversubscribed-ds-oopsla26` folder**
 
-#### Required library version:
-- The scripts to reproduce skiplist results use following libraries:
+## Environment and Machine Details:
 
+- The system configuration used for the experiments and scritps: 
+
+|               |                         |          |                                 |
+| :------------ | :---------------------- | :------- | :------------------------------ |
+| GPU           | NVIDIA Quadro RTX 5000  | OS       | Ubuntu 222.04.1                 |
+| GPU Memory    | 16GB                    | Kernel   | Linux 6.8.0-59-generic          |
+| Driver Version| 580.76.05               | Compiler | nvcc -std=c++17 -arch=sm_75 -O3 |
+| Graphic Bus   | PCI Express 3.0 x 16    |          |                                 |
+
+
+#### Required library version:
+
+- Verify the python libraries version by running the script:
+```bash
+python3 benchmark_scripts/skiplist_scripts/verify_python_library.py
+```
+
+The output should be following
 ```
 Matplotlib version: 3.9.3
 NumPy version: 2.1.3
@@ -74,6 +91,12 @@ Pandas version: 2.2.3
 ~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/validation_script.sh
 ```
 - Add an environment variable in the `.bashrc`, e.g., `export SL_TRACE_ROOT=<path of gpu-oversubscribed-ds-oopsls26 directory>/skiplist_traces`
+
+### Build the binaries:
+- Run the build binary script
+```
+~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/build_binary.sh
+```
 
 ### Kick-the-tire:
 ```bash
@@ -102,11 +125,11 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 ~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/motivation_study.sh
 ```
 
-- Parse the log files to generate csv file, generates `motivation_study_skiplist.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+- Parse the log files to generate csv file, generates `motivation_study_skiplist.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_motivation_skiplist_results.py skiplist_results/motivation_study
 ```
-- Generating figure 4c of the paper. The file `fig4_c.pdf` will be generated in the `figures_skiplist` folder
+- Generating figure 4c of the paper. The file `fig4_c.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` folder
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_motivation_plot.py
 ```
@@ -122,7 +145,7 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_kpw_results.py skiplist_results/kpw_study
 ```
 
-- Output will be stored in the `table8.csv` file in `~/gpu-oversubscribed-ds-oopsla26`
+- Output will be stored in the `table8.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 
 ### Reproduce Table 9 of the paper
 
@@ -134,7 +157,7 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_thread_block_results.py skiplist_results/thread_block_study
 ```
-- Output will be stored in the `table9.csv` file in `~/gpu-oversubscribed-ds-oopsla26`
+- Output will be stored in the `table9.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 
 ### Reproduce Table 10 of the paper
 
@@ -146,7 +169,7 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_innersl_sensitivity_results.py skiplist_results/innersl_sensitivity_study
 ```
-- Output will be stored in the `table10.csv` file in `~/gpu-oversubscribed-ds-oopsla26`
+- Output will be stored in the `table10.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 
 ### Reproduce fig 16 of the paper (Main contribution for skiplist)
 
@@ -155,26 +178,14 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 ~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/fig16_script.sh
 ```
 
-- Parse the log files to generate csv file, generates `fig16_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+- Parse the log files to generate csv file, generates `fig16_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig16_results.py skiplist_results/fig16_study
 ```
 
-- Generating figure 16 of the paper. The file `fig16.pdf` will be generated in the `figures_skiplist` folder
+- Generating figure 16 of the paper. The file `fig16.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` folder
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig16_plot.py
-```
-
-### Downloading data set for the metagenomic and K-mer applications
-
-```bash
-
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/635/GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_genomic.fna.gz
-gunzip -c GCF_000001635.27_GRCm39_genomic.fna.gz > skiplist_traces/GCF_000001635.27_GRCm39_genomic.fna
-
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/285/GCF_000002285.3_CanFam3.1/GCF_000002285.3_CanFam3.1_genomic.fna.gz
-gunzip -c GCF_000002285.3_CanFam3.1_genomic.fna.gz > skiplist_traces/GCF_000002285.3_CanFam3.1_genomic.fna
-
 ```
 
 **NOTE: Fig 6b and 17 for skiplist uses the same real-world application**
@@ -186,22 +197,23 @@ gunzip -c GCF_000002285.3_CanFam3.1_genomic.fna.gz > skiplist_traces/GCF_0000022
 
 ### Scalability study of Metageonomic application(Fig 6b of the paper)
 
-- Parse the log files to generate csv file, generates `fig_6b_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+- Parse the log files to generate csv file, generates `fig_6b_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
 ```
-- Generating figure 6b of the paper. The file `fig_6b.pdf` will be generated in the `figures_skiplist` folder
+- Generating figure 6b of the paper. The file `fig_6b.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` folder
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig6b_plot.py
 ```
 
 ### Study of real-world applications(Fig 17 (RHS) of the paper)
 
-- Parse the log files to generate csv file, generates `fig_17_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26`
+- Parse the log files to generate csv file, generates `fig_17_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
 ```
-- Generating figure 17 (RHS) of the paper. The file `fig_17.pdf` will be generated in the `figures_skiplist` folder
+
+- Generating figure 17 (RHS) of the paper. The file `fig_17.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` directory
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig17_plot.py
 ```

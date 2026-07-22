@@ -82,6 +82,27 @@ def parse_file(filepath, results):
                     if m:
                         record["Search Time"] = round(float(m.group(1))/1000,2) # converting to secs
             results[filepath] = record
+        elif "kmer" in impl_name:
+            record = {
+                "Impl" : impl_name,
+                "Input Size": input_size,
+                "Insert Time": "",
+                "Search Time": ""
+            }
+
+            for i, line in enumerate(lines):
+                operation:str=""
+                if "K-mer count time (GPU): " in line:
+                    m = re.search(r"K-mer count time \(GPU\): \s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
+                    if m:
+                        record["Insert Time"] = round(float(m.group(1))/1000,2) # converting to secs
+
+                # if "Total search time (GPU): " in line:
+                #     m = re.search(r"Total search time \(GPU\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
+                #     if m:
+                #         record["Search Time"] = round(float(m.group(1))/1000,2) # converting to secs
+            record["Search Time"] = 0.0
+            results[filepath] = record
 
     except Exception as e:
         print(f"Could not read {filepath}: {e}")
