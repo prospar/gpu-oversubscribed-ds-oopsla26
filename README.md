@@ -68,7 +68,7 @@ After updating the trace file path or memory reservation the commands(6-8) needs
 | GPU           | NVIDIA Quadro RTX 5000  | OS       | Ubuntu 222.04.1                 |
 | GPU Memory    | 16GB                    | Kernel   | Linux 6.8.0-59-generic          |
 | Driver Version| 580.76.05               | Compiler | nvcc -std=c++17 -arch=sm_75 -O3 |
-| Graphic Bus   | PCI Express 3.0 x 16    |          |                                 |
+| Graphic Bus   | PCI Express 3.0 x 16    | Thrust Version |  2.8.2           |
 
 
 #### Required library version:
@@ -90,8 +90,10 @@ Pandas version: 2.2.3
 ```bash
 ~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/validation_script.sh
 ```
-- Add an environment variable in the `.bashrc`, e.g., `export SL_TRACE_ROOT=<path of gpu-oversubscribed-ds-oopsls26 directory>/skiplist_traces`
-
+- Add an environment variable in the `.bashrc`
+```bash
+~/gpu-oversubscribed-ds-oopsla26$ export SL_TRACE_ROOT=<path of gpu-oversubscribed-ds-oopsls26 directory>/skiplist_traces
+```
 ### Build the binaries:
 - Run the build binary script
 ```
