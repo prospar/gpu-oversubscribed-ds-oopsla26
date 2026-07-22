@@ -88,31 +88,31 @@ Pandas version: 2.2.3
 ### Sanity check:
 - Run the validation script to create directory structures
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/validation_script.sh
+bash benchmark_scripts/skiplist_scripts/validation_script.sh
 ```
 - Add an environment variable in the `.bashrc`
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ export SL_TRACE_ROOT=<path of gpu-oversubscribed-ds-oopsls26 directory>/skiplist_traces
+export SL_TRACE_ROOT=<path of gpu-oversubscribed-ds-oopsls26 directory>/skiplist_traces
 ```
 ### Build the binaries:
 - Run the build binary script
 ```
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/build_binary.sh
+bash benchmark_scripts/skiplist_scripts/build_binary.sh
 ```
 
 ### Kick-the-tire:
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/kick_the_tire_script.sh
+bash benchmark_scripts/skiplist_scripts/kick_the_tire_script.sh
 ```
 
 ### Generating the synthetic traces for full set of experiments:
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash tracegen_scripts/trace_script_skiplist.sh
+bash tracegen_scripts/trace_script_skiplist.sh
 ```
 
 ### Downloading the traces for real-world application
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash tracegen_scripts/application_traces.sh
+bash tracegen_scripts/application_traces.sh
 ```
 
 ### Motivation Figure (figure 4(c) in the paper)
@@ -124,27 +124,27 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 
 - Execute the motivation script present in benchmark_scripts 
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/motivation_study.sh
+bash benchmark_scripts/skiplist_scripts/motivation_study.sh
 ```
 
 - Parse the log files to generate csv file, generates `motivation_study_skiplist.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_motivation_skiplist_results.py skiplist_results/motivation_study
+python3 benchmark_scripts/skiplist_scripts/parse_motivation_skiplist_results.py skiplist_results/motivation_study
 ```
 - Generating figure 4c of the paper. The file `fig4_c.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` folder
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_motivation_plot.py
+python3 Graph_Plotting_Scripts/skiplist_motivation_plot.py
 ```
 
 ### Reproduce Table 8 of the paper
 
 - Running experiments
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/keys_per_warp_study.sh
+bash benchmark_scripts/skiplist_scripts/keys_per_warp_study.sh
 ```
 - Generate a consolidate csv file for traces
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_kpw_results.py skiplist_results/kpw_study
+python3 benchmark_scripts/skiplist_scripts/parse_kpw_results.py skiplist_results/kpw_study
 ```
 
 - Output will be stored in the `table8.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
@@ -153,11 +153,11 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 
 - Running experiments
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/thread_block_study.sh
+bash benchmark_scripts/skiplist_scripts/thread_block_study.sh
 ```
 - Generating consolidate csv file for traces
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_thread_block_results.py skiplist_results/thread_block_study
+python3 benchmark_scripts/skiplist_scripts/parse_thread_block_results.py skiplist_results/thread_block_study
 ```
 - Output will be stored in the `table9.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 
@@ -165,11 +165,11 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 
 - Running the experiments
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/innersl_sensitivity_study.sh
+bash benchmark_scripts/skiplist_scripts/innersl_sensitivity_study.sh
 ```
 - Generating the consolidated csv  file for traces
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_innersl_sensitivity_results.py skiplist_results/innersl_sensitivity_study
+python3 benchmark_scripts/skiplist_scripts/parse_innersl_sensitivity_results.py skiplist_results/innersl_sensitivity_study
 ```
 - Output will be stored in the `table10.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 
@@ -177,45 +177,45 @@ _The script runs only monotonic trace in default setting to complete in reasonab
 
 - Execute the motivation script present in benchmark_scripts 
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/fig16_script.sh
+bash benchmark_scripts/skiplist_scripts/fig16_script.sh
 ```
 
 - Parse the log files to generate csv file, generates `fig16_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig16_results.py skiplist_results/fig16_study
+python3 benchmark_scripts/skiplist_scripts/parse_fig16_results.py skiplist_results/fig16_study
 ```
 
 - Generating figure 16 of the paper. The file `fig16.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` folder
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig16_plot.py
+python3 Graph_Plotting_Scripts/skiplist_fig16_plot.py
 ```
 
 **NOTE: Fig 6b and 17 for skiplist uses the same real-world application**
 
 - Execute the applicatons study script present in benchmark_scripts. Generate the data both for fig 6b and 17.
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ bash benchmark_scripts/skiplist_scripts/applications_study.sh
+bash benchmark_scripts/skiplist_scripts/applications_study.sh
 ```
 
 ### Scalability study of Metageonomic application(Fig 6b of the paper)
 
 - Parse the log files to generate csv file, generates `fig_6b_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
+python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
 ```
 - Generating figure 6b of the paper. The file `fig_6b.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` folder
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig6b_plot.py
+python3 Graph_Plotting_Scripts/skiplist_fig6b_plot.py
 ```
 
 ### Study of real-world applications(Fig 17 (RHS) of the paper)
 
 - Parse the log files to generate csv file, generates `fig_17_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
+python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
 ```
 
 - Generating figure 17 (RHS) of the paper. The file `fig_17.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` directory
 ```bash
-~/gpu-oversubscribed-ds-oopsla26$ python3 Graph_Plotting_Scripts/skiplist_fig17_plot.py
+python3 Graph_Plotting_Scripts/skiplist_fig17_plot.py
 ```
