@@ -65,7 +65,7 @@ After updating the trace file path or memory reservation the commands(6-8) needs
 
 |               |                         |          |                                 |
 | :------------ | :---------------------- | :------- | :------------------------------ |
-| GPU           | NVIDIA Quadro RTX 5000  | OS       | Ubuntu 222.04.1                 |
+| GPU           | NVIDIA Quadro RTX 5000  | OS       | Ubuntu 22.04.1                 |
 | GPU Memory    | 16GB                    | Kernel   | Linux 6.8.0-59-generic          |
 | Driver Version| 580.76.05               | Compiler | nvcc -std=c++17 -arch=sm_75 -O3 |
 | Graphic Bus   | PCI Express 3.0 x 16    | Thrust Version |  2.8.2           |
