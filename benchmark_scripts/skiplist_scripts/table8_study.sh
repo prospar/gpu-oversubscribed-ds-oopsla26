@@ -3,7 +3,7 @@
 CURRENT_DIR=$PWD
 BIN_DIR="$CURRENT_DIR/bin"
 skiplist_results_dir="$CURRENT_DIR/skiplist_results"
-expr_dir="kpw_study"
+expr_dir="table8_study"
 
 if [[ -v SL_TRACE_ROOT ]]; then
     echo "The path for root dir of traces exists."

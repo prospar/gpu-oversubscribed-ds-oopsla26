@@ -30,15 +30,12 @@ def extract_trace_type(filepath):
     Extract trace type from the file path.
 
     MonotonicIncrease -> MI
-    SparseUnique      -> SU
     DenseUnique       -> DU
     """
     path = filepath.lower()
 
     if "monotonicincrease" in path:
         return "MI"
-    elif "sparseunique" in path:
-        return "SU"
     elif "denseunique" in path:
         return "DU"
     else:
@@ -55,7 +52,7 @@ def extract_input_size(filepath):
     parts = Path(filepath).parts
 
     for i, part in enumerate(parts):
-        if part in ("SparseUnique", "MonotonicIncrease", "DenseUnique"):
+        if part in ("DenseUnique", "MonotonicIncrease"):
             if i > 0 and parts[i - 1].isdigit():
                 return parts[i - 1]
 
@@ -64,10 +61,10 @@ def extract_input_size(filepath):
 
 def extract_output_number(filepath):
     """
-    output-128.log -> 128
+    output-kpw120.log -> 120
     """
     filename = os.path.basename(filepath)
-    m = re.search(r"output-blk(\d+)", filename)
+    m = re.search(r"output-kpw(\d+)", filename)
     if m:
         return m.group(1)
     return "Unknown"
@@ -79,15 +76,10 @@ def parse_file(filepath, results):
             lines = f.readlines()
         
         trace_type = extract_trace_type(filepath)
-        input_size = extract_input_size(filepath)
-        filepath_str:list = os.path.normpath(filepath).split(os.sep)
-        
+        kpw_size = extract_output_number(filepath)
         record = {
-            "Impl" : filepath_str[2],
-            "Input Size": input_size,
             "Trace Type": trace_type,
             "Insert Time": "",
-            "Search Time": ""
         }
 
         for i, line in enumerate(lines):
@@ -96,11 +88,13 @@ def parse_file(filepath, results):
                 m = re.search(r"Median Insert Time:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
                 if m:
                     record["Insert Time"] = round(float(m.group(1))/1000,2) # converting to secs
-            if "Median Search Time: " in line:
-                m = re.search(r"Median Search Time:\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*ms", line)
-                if m:
-                    record["Search Time"] = round(float(m.group(1))/1000,2) # converting to secs
-            results[filepath] = record
+        
+        if trace_type not in results:
+            results[trace_type] = {
+                "Trace Type": trace_type
+            }
+
+        results[trace_type][f'{kpw_size}'] = record["Insert Time"]
 
     except Exception as e:
         print(f"Could not read {filepath}: {e}")
@@ -118,14 +112,22 @@ def walk_directory(root_dir):
     return list(results.values())
 
 
-def write_csv(results, outfile="parsed_results.csv"):
+def write_csv(results, outfile="parsed_results_table8.csv"):
 
     fields = [
-        "Impl",
-        "Input Size",
         "Trace Type",
-        "Insert Time",
-        "Search Time"
+        '1',
+        '30',
+        '60', 
+        '120', 
+        '150',
+        '180',
+        '210',
+        '240',
+        '270',
+        '300',
+        '330',
+        '360'
     ]
 
     with open(f'figures_skiplist/{outfile}', "w", newline="", encoding="utf-8") as f:
@@ -138,11 +140,11 @@ def write_csv(results, outfile="parsed_results.csv"):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        print("Usage: python parse_motivation_skiplist_results.py <root_directory>")
+    if len(sys.argv) < 2:
+        print("Usage: python parse_table8_results.py <root_directory>")
         sys.exit(1)
 
-    csv_name_str = "motivation_study_skiplist.csv"
+    csv_name_str = "table8.csv"
 
     print(f'{csv_name_str}')
     root = sys.argv[1]
