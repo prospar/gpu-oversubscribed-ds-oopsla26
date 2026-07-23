@@ -140,11 +140,11 @@ python3 Graph_Plotting_Scripts/skiplist_fig4c_plot.py
 
 - Running experiments
 ```bash
-bash benchmark_scripts/skiplist_scripts/keys_per_warp_study.sh
+bash benchmark_scripts/skiplist_scripts/table8_study.sh
 ```
 - Generate a consolidate csv file for traces
 ```bash
-python3 benchmark_scripts/skiplist_scripts/parse_kpw_results.py skiplist_results/kpw_study
+python3 benchmark_scripts/skiplist_scripts/parse_table8_results.py skiplist_results/table8_study
 ```
 
 - Output will be stored in the `table8.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
@@ -153,11 +153,11 @@ python3 benchmark_scripts/skiplist_scripts/parse_kpw_results.py skiplist_results
 
 - Running experiments
 ```bash
-bash benchmark_scripts/skiplist_scripts/thread_block_study.sh
+bash benchmark_scripts/skiplist_scripts/table9_study.sh
 ```
 - Generating consolidate csv file for traces
 ```bash
-python3 benchmark_scripts/skiplist_scripts/parse_thread_block_results.py skiplist_results/thread_block_study
+python3 benchmark_scripts/skiplist_scripts/parse_table9_results.py skiplist_results/table9_study
 ```
 - Output will be stored in the `table9.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 
