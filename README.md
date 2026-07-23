@@ -165,11 +165,11 @@ python3 benchmark_scripts/skiplist_scripts/parse_table9_results.py skiplist_resu
 
 - Running the experiments
 ```bash
-bash benchmark_scripts/skiplist_scripts/innersl_sensitivity_study.sh
+bash benchmark_scripts/skiplist_scripts/table10_study.sh
 ```
 - Generating the consolidated csv  file for traces
 ```bash
-python3 benchmark_scripts/skiplist_scripts/parse_innersl_sensitivity_results.py skiplist_results/innersl_sensitivity_study
+python3 benchmark_scripts/skiplist_scripts/parse_table10_results.py skiplist_results/table10_study
 ```
 - Output will be stored in the `table10.csv` file in `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 
@@ -199,7 +199,7 @@ bash benchmark_scripts/skiplist_scripts/applications_study.sh
 
 ### Scalability study of Metageonomic application(Fig 6b of the paper)
 
-- Parse the log files to generate csv file, generates `fig_6b_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
+- Parse the log files to generate csv file, generates `fig6b_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
 python3 benchmark_scripts/skiplist_scripts/parse_fig6b_results.py skiplist_results/applications_study
 ```
@@ -210,9 +210,9 @@ python3 Graph_Plotting_Scripts/skiplist_fig6b_plot.py
 
 ### Study of real-world applications(Fig 17 (RHS) of the paper)
 
-- Parse the log files to generate csv file, generates `fig_17_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
+- Parse the log files to generate csv file, generates `fig17_study.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
-python3 benchmark_scripts/skiplist_scripts/parse_applications_results.py skiplist_results/applications_study
+python3 benchmark_scripts/skiplist_scripts/parse_fig17_results.py skiplist_results/applications_study
 ```
 
 - Generating figure 17 (RHS) of the paper. The file `fig_17.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` directory
