@@ -19,7 +19,7 @@
 
 - Verify the python libraries version by running the script:
 ```bash
-python3 benchmark_scripts/skiplist_scripts/verify_python_library.py
+python3 benchmark_scripts/verify_python_library.py
 ```
 
 The output should be like the following example:
@@ -54,7 +54,7 @@ Alternatively, individual traces can be generated separately using the correspon
 ### Build the binaries:
 - Run the build binary script
 ```
-bash benchmark_scripts/skiplist_scripts/build_binary.sh
+bash benchmark_scripts/build_binary.sh
 ```
 
 ## Running Benchmarks and Generating Plots for HTUVM, HTOVS and CUCO
