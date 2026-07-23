@@ -60,7 +60,7 @@ bash benchmark_scripts/build_binary.sh
 ## Running Benchmarks and Generating Plots for HTUVM, HTOVS and CUCO
 
 1. Run the benchmark scripts located in the `benchmark_scripts` directory.
-   - Separate subdirectories are provided for **HTUVM** and **HTOVS**.
+   - Separate subdirectories are provided for **HTUVM**, **HTOVS** and **CUCO**.
    - Within each subdirectory, individual scripts are available for each benchmark kernel:
      - `insert` — used to generate **Figure 9 (left-hand side)**.
      - `delete` — used to generate **Figure 9 (right-hand side)**.
@@ -120,12 +120,14 @@ bash benchmark_scripts/build_binary.sh
 ## GPH Configuring Oversubscription
 
 
-For details about the GPH design and evaluation, refer to:
+For details about the GPH design and evaluation, please refer to:
 
-> Jiaping Cao, Le Xu, Man Lung Yiu, Jianbin Qin, and Bo Tang. 2025. 
-> GPH: An Efficient and Effective Perfect Hashing Scheme for GPU Architectures. 
-> Proceedings of the ACM on Management of Data (PACMMOD), 3(3), Article 165, 26 pages. 
+> Jiaping Cao, Le Xu, Man Lung Yiu, Jianbin Qin, and Bo Tang. 2025.  
+> GPH: An Efficient and Effective Perfect Hashing Scheme for GPU Architectures.  
+> Proceedings of the ACM on Management of Data (PACMMOD), 3(3), Article 165, 26 pages.  
 > https://doi.org/10.1145/3725406
+
+**Artifact note:** The authors of *GPH: An Efficient and Effective Perfect Hashing Scheme for GPU Architectures* shared their artifacts with us on September 6, 2025. We have updated the code to enable the collection of consistent and appropriate results for our evaluation.
 
 To simulate different oversubscription scenarios for GPH, update the value on **line 72** of `geph_exp.cuh`:
 
