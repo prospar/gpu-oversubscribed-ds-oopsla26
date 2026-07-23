@@ -129,6 +129,8 @@ For details about the GPH design and evaluation, please refer to:
 
 **Artifact note:** The authors of *GPH: An Efficient and Effective Perfect Hashing Scheme for GPU Architectures* shared their artifacts with us on September 6, 2025. We have updated the code to enable the collection of consistent and appropriate results for our evaluation.
 
+**Note about the GPH Code:** The code included in this artifact is a modified version of the original GPH implementation. We strongly recommend that this version **not** be used to reproduce or evaluate the results reported in the original GPH paper.
+
 To simulate different oversubscription scenarios for GPH, update the value on **line 72** of `geph_exp.cuh`:
 
 `gph_opensource_copy_original/perf/geph_exp.cuh`
