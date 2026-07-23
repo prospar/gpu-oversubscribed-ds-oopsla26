@@ -20,12 +20,16 @@ input_sizes = [
 ]
 
 
-def build_dataset(results_folder, kernel):
+def build_dataset(results_folder):
 
-
-    pattern = re.compile(
-        rf"Total time taken by {re.escape(kernel)} kernel(?: including sort)? \(ms\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"
-    )
+    patterns = {
+        "Insert": re.compile(
+            r"Total time taken by insert kernel(?: including sort)? \(ms\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"
+        ),
+        "Search": re.compile(
+            r"Total time taken by search kernel(?: including sort)? \(ms\):\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"
+        ),
+    }
 
     workloads = [
         ("MI Insert", "Insert", "MI"),
@@ -58,7 +62,7 @@ def build_dataset(results_folder, kernel):
             with open(logfile, "r") as f:
                 text = f.read()
 
-            match = pattern.search(text)
+            match = patterns[folder].search(text)
 
             if match:
                 values.append(float(match.group(1)))
@@ -82,19 +86,10 @@ def main():
         help="Example: results_motivation"
     )
 
-    parser.add_argument(
-        "kernel",
-        choices=["insert", "search", "delete"],
-        help="Kernel name inside the log file."
-    )
-
     args = parser.parse_args()
 
     # Read dataset
-    df = build_dataset(
-        args.results_folder,
-        args.kernel
-    )
+    df = build_dataset(args.results_folder)
 
     print(df)
 
@@ -140,7 +135,7 @@ def main():
 
     ax.set_xticks(df["Input Size"])
     ax.set_xticklabels(
-        [f"{x/1e9:.1f}" for x in df["Input Size"]],
+        [f"{x / 1e9:.1f}" for x in df["Input Size"]],
         fontsize=18,
     )
 

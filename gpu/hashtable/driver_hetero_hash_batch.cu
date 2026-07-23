@@ -126,6 +126,23 @@ int main(int argc, char *argv[]) {
        << " Bitmap size: " << bitmap_size << " Range size: " << rangeSize
        << " GPU batch size: " << gpuBatchSize << "\n";
 
+
+  // uint64_t *dummy_array = nullptr;
+
+  // double bytes = 12.72 * 1024.0 * 1024.0 * 1024.0;
+  // size_t num_elements = static_cast<size_t>(bytes / sizeof(uint64_t));
+
+  // cudaError_t err = cudaMalloc(&dummy_array, num_elements * sizeof(uint64_t));
+  // if (err != cudaSuccess) {
+  //   printf("CUDA malloc failed: %s\n", cudaGetErrorString(err));
+  //   // Handle the error (e.g., free other memory, reduce allocation size, etc.)
+  // } else {
+  //   printf("CUDA malloc suceeded\n");
+  
+
+
+
+
   // Cost across per-batch kernel launches
   float total_time = 0.0f;
   float total_insert_time = 0.0f;

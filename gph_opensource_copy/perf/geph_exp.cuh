@@ -77,7 +77,7 @@ void geph_find(uint32_t *keys_to_insert, uint32_t *vals_to_insert,
     printf("CUDA malloc failed: %s\n", cudaGetErrorString(err));
     // Handle the error (e.g., free other memory, reduce allocation size, etc.)
   } else {
-    printf("CUDA malloc succeeded: allocated 12GB\n");
+    printf("CUDA malloc succeeded\n");
   }
 
   int64_t table_max_cap = (int64_t)(insert_n / load_factor);
