@@ -13,12 +13,12 @@ operations=(
 files=(
        "insert_trace-400e7-100-add-no-dup-MONOTONIC_INCREASE.bin" 
        "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE.bin" 
-    #    "insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin"
-    #    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin"
-    #    "insert_trace-400e7-100-add-20-dup-SPARSE_REPEAT.bin"
-    #    "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin"
-    #    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin"
-    #    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin"
+       "insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin"
+       "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin"
+       "insert_trace-400e7-100-add-20-dup-SPARSE_REPEAT.bin"
+       "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin"
+       "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin"
+       "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin"
        )
 
 

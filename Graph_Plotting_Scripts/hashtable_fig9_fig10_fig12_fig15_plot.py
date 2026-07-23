@@ -18,7 +18,7 @@ oversub_levels = [0, 25, 50, 75, 100]
 def build_dataset(results_folder, folder, kernel):
     """
     results_folder : e.g. results_HTOVS
-    folder         : e.g. inserts, search_positive, search_negative
+    folder         : e.g. inserts, insert_sort, search_positive
     kernel         : insert, search, delete
     """
 
@@ -26,6 +26,7 @@ def build_dataset(results_folder, folder, kernel):
         rf"Total time taken by {re.escape(kernel)} kernel\s*(?:\(including sort\)|including sort)?\s*\(ms\):\s*([^\s]+)",
         re.IGNORECASE,
     )
+
     data = {"Oversubscription Level": oversub_levels}
 
     for algo in algorithms:
@@ -58,28 +59,33 @@ def build_dataset(results_folder, folder, kernel):
 def main():
 
     parser = argparse.ArgumentParser(
-        description="Plot speedup between two implementations."
+        description="Plot speedup between two result folders/subfolders."
     )
 
     parser.add_argument(
         "results_folder1",
-        help="First results folder (e.g. results_HTOVS)"
+        help="First results folder (e.g. results_HTOVS)",
     )
 
     parser.add_argument(
         "results_folder2",
-        help="Second results folder (e.g. results_HTUVM)"
+        help="Second results folder (e.g. results_HTUVM)",
     )
 
     parser.add_argument(
-        "folder",
-        help="Folder containing logs (e.g. inserts, search_positive, search_negative)"
+        "folder1",
+        help="First log folder (e.g. inserts, insert_sort, search_positive)",
+    )
+
+    parser.add_argument(
+        "folder2",
+        help="Second log folder (e.g. inserts, insert_sort, search_positive)",
     )
 
     parser.add_argument(
         "kernel",
         choices=["insert", "search", "delete"],
-        help="Kernel name to parse from logs"
+        help="Kernel name to parse from logs",
     )
 
     args = parser.parse_args()
@@ -87,27 +93,27 @@ def main():
     # Read datasets
     data1 = build_dataset(
         args.results_folder1,
-        args.folder,
-        args.kernel
+        args.folder1,
+        args.kernel,
     )
 
     data2 = build_dataset(
         args.results_folder2,
-        args.folder,
-        args.kernel
+        args.folder2,
+        args.kernel,
     )
 
     df1 = pd.DataFrame(data1)
     df2 = pd.DataFrame(data2)
 
-    print(f"\nResults from {args.results_folder1}")
+    print(f"\nResults from {args.results_folder1}/{args.folder1}")
     print(df1)
 
-    print(f"\nResults from {args.results_folder2}")
+    print(f"\nResults from {args.results_folder2}/{args.folder2}")
     print(df2)
 
     # --------------------------------------------------
-    # Compute speedup (Folder1 / Folder2)
+    # Compute speedup (Dataset1 / Dataset2)
     # --------------------------------------------------
 
     speedup = pd.DataFrame()
@@ -187,7 +193,6 @@ def main():
     )
 
     plt.tight_layout()
-
     plt.savefig("speedup.pdf", dpi=300)
 
 

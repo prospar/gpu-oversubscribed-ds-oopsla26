@@ -69,8 +69,6 @@ htovs-opt: ${HT_OVS_Path}/driver_hetero_hash_batch.cu
 htovs-opt-32: ${HT_OVS_Path}/driver_hetero_hash_batch.cu
 	${NVCC} ${CUDAFLAGS} -I${INC} $< -o $(BIN)/$@.out ${HETERO_PTHREAD_FLAG} -DOUTER_HASHTABLE_PREFETCH_HINT -DUVM_MEM_ADVISE_SA -DUVM_PREFETCH_HINT -DCG -DBSORT -DCOOP_GROUP_SIZE=32
 
-#Trace gen commands
-
 
 #cuCollections Commands:
 cuco-insert: ${CUCO_Path}/insert_or_assign_test.cu

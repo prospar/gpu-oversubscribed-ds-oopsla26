@@ -9,20 +9,20 @@ TRACE_DIR=/data/heterods-trace
 cd ./../../bin/
 operations=(
     2000000000
-    # 2500000000
-    # 3000000000
-    # 3500000000
-    # 4000000000
+    2500000000
+    3000000000
+    3500000000
+    4000000000
 )
 
 files=(
-    # "insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin"
-    # "insert_trace-400e7-100-add-no-dup-MONOTONIC_INCREASE.bin"
-    # "insert_trace-400e7-100-add-20-dup-SPARSE_REPEAT.bin"
-    # "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin"
-    # "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin"
-    # "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin"
-    # "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin"
+    "insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin"
+    "insert_trace-400e7-100-add-no-dup-MONOTONIC_INCREASE.bin"
+    "insert_trace-400e7-100-add-20-dup-SPARSE_REPEAT.bin"
+    "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin"
+    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin"
+    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin"
+    "insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin"
     "insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE.bin"
 )
 
@@ -32,28 +32,28 @@ for file in "${files[@]}"; do
 
     case "$file" in
         insert_trace-400e7-100-add-20-dup-DENSE_REPEAT.bin)
-            outdir="./../results_CUCO/search/DR"
+            outdir="./../results_CUCO/search_positive/DR"
             ;;
         insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE.bin)
-            outdir="./../results_CUCO/search/DU"
+            outdir="./../results_CUCO/search_positive/DU"
             ;;
         insert_trace-400e7-100-add-no-dup-MONOTONIC_INCREASE.bin)
-            outdir="./../results_CUCO/search/MI"
+            outdir="./../results_CUCO/search_positive/MI"
             ;;
         insert_trace-400e7-100-add-no-dup-DENSE_UNIQUE_1e9_Clusters.bin)
-            outdir="./../results_CUCO/search/DUL"
+            outdir="./../results_CUCO/search_positive/DUL"
             ;;
         insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_5e8_Random_Clusters.bin)
-            outdir="./../results_CUCO/search/SUR"
+            outdir="./../results_CUCO/search_positive/SUR"
             ;;
         insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE_ZigZag.bin)
-            outdir="./../results_CUCO/search/ZZ"
+            outdir="./../results_CUCO/search_positive/ZZ"
             ;;
         insert_trace-400e7-100-add-no-dup-SPARSE_UNIQUE.bin)
-        outdir="./../results_CUCO/search/SU"
+        outdir="./../results_CUCO/search_positive/SU"
             ;;
         *)
-            outdir="./../results_CUCO/search/SR"
+            outdir="./../results_CUCO/search_positive/SR"
             ;;
     esac
 
