@@ -122,18 +122,18 @@ bash tracegen_scripts/application_traces.sh
 
 _The script runs only monotonic trace in default setting to complete in reasonable time, uncomment line 91 in the `motivation\_study.sh`to collect result for sparse traces_
 
-- Execute the motivation script present in benchmark_scripts 
+- Execute the script for figure 4c present in benchmark_scripts 
 ```bash
-bash benchmark_scripts/skiplist_scripts/motivation_study.sh
+bash benchmark_scripts/skiplist_scripts/fig4c_study.sh
 ```
 
-- Parse the log files to generate csv file, generates `motivation_study_skiplist.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
+- Parse the log files to generate csv file, generates `fig4c_study_skiplist.csv` in path `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist`
 ```bash
-python3 benchmark_scripts/skiplist_scripts/parse_motivation_skiplist_results.py skiplist_results/motivation_study
+python3 benchmark_scripts/skiplist_scripts/parse_fig4c_skiplist_results.py skiplist_results/fig4c_study
 ```
 - Generating figure 4c of the paper. The file `fig4_c.pdf` will be generated in the `~/gpu-oversubscribed-ds-oopsla26/figures_skiplist` folder
 ```bash
-python3 Graph_Plotting_Scripts/skiplist_motivation_plot.py
+python3 Graph_Plotting_Scripts/skiplist_fig4c_plot.py
 ```
 
 ### Reproduce Table 8 of the paper
