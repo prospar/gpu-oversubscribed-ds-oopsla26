@@ -118,10 +118,10 @@ def write_csv(results, outfile="fig_6b_study.csv"):
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:
-        print("Usage: python parse_fig16_results.py <root_directory>")
+        print("Usage: python parse_fig6b_results.py <root_directory>")
         sys.exit(1)
 
-    csv_name_str = "fig_6b_study.csv"
+    csv_name_str = "fig6b_study.csv"
 
     print(f'{csv_name_str}')
     root = sys.argv[1]

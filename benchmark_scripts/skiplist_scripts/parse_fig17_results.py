@@ -143,7 +143,7 @@ if __name__ == "__main__":
         print("Usage: python parse_fig16_results.py <root_directory>")
         sys.exit(1)
 
-    csv_name_str = "fig_17_study.csv"
+    csv_name_str = "fig17_study.csv"
 
     print(f'{csv_name_str}')
     root = sys.argv[1]
