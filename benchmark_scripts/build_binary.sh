@@ -17,7 +17,7 @@ make sl-ovs-baseline
 make sl-uvm-sort
 make sl-ovs-sort
 
-#binaries for RHS of fig 17 and fig 
+#binaries for RHS of fig 17 and fig 6b
 make sluvm_classifier
 make slovs_classifier
 make sluvm_kmer
