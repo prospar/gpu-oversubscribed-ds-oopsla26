@@ -336,9 +336,9 @@ bash benchmark_scripts/skiplist_scripts/kick_the_tire_script.sh
 ```
 
 ### Generating the synthetic traces for full set of experiments:
-- If traces generated already for hashtable, skip the step
+- To generate the traces only for skiplist comment lines from 20 to 30 and run the script. **If script is executed already, skip the step** 
 ```bash
-bash tracegen_scripts/trace_script_skiplist.sh
+bash tracegen_scripts/trace_script.sh
 ```
 
 ### Downloading the traces for real-world application
@@ -349,9 +349,9 @@ bash tracegen_scripts/application_traces.sh
 ### Motivation Figure (figure 4(c) in the paper)
 
 
-**Warning: Runtime of motivation results with sparse traces extends into hours for insert and search with oversubcription**
+**Warning: Runtime of motivation results with sparse traces extend into hours for insert and search with oversubcription**
 
-_The script runs only monotonic trace in default setting to complete in reasonable time, uncomment line 91 in the `fig4c_study.sh`to collect result for sparse traces_
+_The script runs only monotonic trace in default setting to complete in reasonable time, uncomment line 85 in the `fig4c_study.sh`to collect result for sparse traces_
 
 - Execute the script for figure 4c present in benchmark_scripts 
 ```bash
