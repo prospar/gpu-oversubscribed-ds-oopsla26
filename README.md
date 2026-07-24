@@ -423,7 +423,7 @@ python3 Graph_Plotting_Scripts/skiplist_fig16_plot.py
 
 **NOTE: Fig 6b and 17 for skiplist uses the same real-world application**
 
-- Execute the applicatons study script present in benchmark_scripts. Generate the data both for fig 6b and 17.
+- Execute the applications study script present in benchmark_scripts. Generate the data both for fig 6b and 17.
 ```bash
 bash benchmark_scripts/skiplist_scripts/applications_study.sh
 ```
